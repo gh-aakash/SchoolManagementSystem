@@ -70,6 +70,10 @@ export function CreateNotificationForm({ classes, sections, students, teachers, 
         formData.append('recipient_group', recipientGroup)
         formData.append('recipients', JSON.stringify(selectedRecipients))
 
+        // Channels are handled automatically by form submission if they have name="channels"
+        // But FormData.getAll('channels') will give us the array.
+        // We don't need to do anything special if the server action reads getAll('channels')
+
         const result = await createNotification(formData)
         setIsLoading(false)
 
@@ -109,6 +113,25 @@ export function CreateNotificationForm({ classes, sections, students, teachers, 
                                 <SelectItem value="Transport">Transport</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Send Via</Label>
+                        <div className="flex gap-4">
+                            {['App', 'Email', 'SMS', 'WhatsApp'].map(channel => (
+                                <div key={channel} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={channel}
+                                        name="channels"
+                                        value={channel}
+                                        defaultChecked={channel === 'App'}
+                                    />
+                                    <label htmlFor={channel} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                        {channel}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="space-y-2">

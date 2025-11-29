@@ -39,10 +39,10 @@ export async function createStudent(formData: FormData) {
         }
     }
 
-    const studentData = {
+    const studentData: any = {
         school_id: profile.school_id,
-        admission_no: nextAdmissionNo,
         first_name: formData.get('first_name'),
+        email: formData.get('email'),
         last_name: formData.get('last_name'),
         gender: formData.get('gender'),
         dob: formData.get('dob'),
@@ -61,11 +61,20 @@ export async function createStudent(formData: FormData) {
         pincode: formData.get('pincode'),
         current_class_id: formData.get('class_id'),
         current_section_id: formData.get('section_id'),
-        photo_url: formData.get('photo_url'),
-        tc_url: formData.get('tc_url'),
-        birth_cert_url: formData.get('birth_cert_url'),
-        // academic_year_id: ... (Should fetch active year)
     }
+
+    // Only add admission_no if creating new (handled later) or if we want to allow updating it (usually not)
+    if (!formData.get('id')) {
+        studentData.admission_no = nextAdmissionNo
+    }
+
+    // Only add URLs if they exist in formData (meaning a new upload happened)
+    if (formData.get('photo_url')) studentData.photo_url = formData.get('photo_url')
+    if (formData.get('tc_url')) studentData.tc_url = formData.get('tc_url')
+    if (formData.get('birth_cert_url')) studentData.birth_cert_url = formData.get('birth_cert_url')
+
+    // Check if ID exists for update
+    const studentId = formData.get('id') as string
 
     // Get active academic year
     const { data: activeYear } = await supabase
@@ -77,15 +86,89 @@ export async function createStudent(formData: FormData) {
 
     if (!activeYear) return { error: 'No active academic year found. Please set one in Settings.' }
 
-    const { error } = await supabase
-        .from('students')
-        .insert({
-            ...studentData,
-            academic_year_id: activeYear.id
-        })
+    let error;
+
+    if (studentId) {
+        // Update existing student
+        // Remove admission_no from update data to prevent changing it
+        const { admission_no, ...updateData } = studentData
+
+        const result = await supabase
+            .from('students')
+            .update({
+                ...updateData,
+                // Only update photo/docs if new ones provided (handled by form logic sending empty if not new?)
+                // Actually formData.get returns empty string if not present?
+                // We should clean up null/undefined/empty strings if we don't want to overwrite with null
+                // But our form sends the URL if uploaded. If not uploaded, it might send empty string or old URL?
+                // The form logic sets 'photo_url' only if uploaded. 
+                // If not uploaded, we should probably NOT include it in updateData if it's not in formData.
+                // But formData.get returns null if not set.
+            })
+            .eq('id', studentId)
+            .eq('school_id', profile.school_id)
+
+        error = result.error
+    } else {
+        // Create new student
+        const result = await supabase
+            .from('students')
+            .insert({
+                ...studentData,
+                academic_year_id: activeYear.id
+            })
+        error = result.error
+    }
 
     if (error) return { error: error.message }
 
     revalidatePath('/dashboard/students')
-    redirect('/dashboard/students')
+    if (studentId) {
+        revalidatePath(`/dashboard/students/${studentId}`)
+        redirect(`/dashboard/students/${studentId}`)
+    } else {
+        redirect('/dashboard/students')
+    }
+}
+
+export async function autoAllocateRollNumbers(classId: string, sectionId: string) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('school_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.school_id) return { error: 'No school linked' }
+
+    // Fetch students in class/section
+    const { data: students } = await supabase
+        .from('students')
+        .select('id, first_name, last_name')
+        .eq('school_id', profile.school_id)
+        .eq('current_class_id', classId)
+        .eq('current_section_id', sectionId)
+        .order('first_name', { ascending: true })
+        .order('last_name', { ascending: true })
+
+    if (!students || students.length === 0) return { error: 'No students found in this section' }
+
+    // Update roll numbers
+    let count = 0
+    for (let i = 0; i < students.length; i++) {
+        const student = students[i]
+        const rollNo = (i + 1).toString()
+        const { error } = await supabase
+            .from('students')
+            .update({ roll_no: rollNo })
+            .eq('id', student.id)
+
+        if (!error) count++
+    }
+
+    revalidatePath('/dashboard/students')
+    return { success: true, message: `Updated roll numbers for ${count} students` }
 }

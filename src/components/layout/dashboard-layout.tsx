@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from 'next/link'
@@ -12,7 +11,10 @@ import {
     LogOut,
     Menu,
     IndianRupee,
-    Bell
+    Bell,
+    Zap,
+    CalendarCheck,
+    Calendar
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -26,7 +28,11 @@ const sidebarItems = [
     { icon: IndianRupee, label: 'Fees', href: '/dashboard/fees' },
     { icon: Bell, label: 'Notifications', href: '/dashboard/notifications/create' },
     { icon: GraduationCap, label: 'Academics', href: '/dashboard/academics' },
+    { icon: Calendar, label: 'Timetable', href: '/dashboard/academics/timetable' },
+    { icon: Users, label: 'Faculty', href: '/dashboard/faculty' },
     { icon: Bus, label: 'Transport', href: '/dashboard/transport' },
+    { icon: CalendarCheck, label: 'Attendance', href: '/dashboard/attendance' },
+    { icon: Zap, label: 'Automations', href: '/dashboard/automations' },
     { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
 ]
 

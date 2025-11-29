@@ -79,6 +79,33 @@ export default async function StudentsPage({
 
     const { data: students } = await query
 
+    // Fetch Attendance Stats
+    let studentsWithStats = students || []
+    if (students && students.length > 0) {
+        const studentIds = students.map(s => s.id)
+        const { data: attendance } = await supabase
+            .from('attendance')
+            .select('student_id, status')
+            .in('student_id', studentIds)
+            .eq('school_id', profile.school_id)
+
+        if (attendance) {
+            const statsMap: Record<string, { total: number, present: number }> = {}
+            attendance.forEach(a => {
+                if (!statsMap[a.student_id]) statsMap[a.student_id] = { total: 0, present: 0 }
+                statsMap[a.student_id].total++
+                if (a.status === 'Present') statsMap[a.student_id].present++
+            })
+
+            studentsWithStats = students.map(s => ({
+                ...s,
+                attendance_pct: statsMap[s.id]
+                    ? Math.round((statsMap[s.id].present / statsMap[s.id].total) * 100)
+                    : 0
+            }))
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -97,7 +124,11 @@ export default async function StudentsPage({
 
             <StudentFilters classes={classes || []} sections={sections || []} />
 
-            <StudentTable students={students || []} />
+            <StudentTable
+                students={studentsWithStats}
+                classId={classId !== 'all' ? classId : undefined}
+                sectionId={sectionId !== 'all' ? sectionId : undefined}
+            />
         </div>
     )
 }

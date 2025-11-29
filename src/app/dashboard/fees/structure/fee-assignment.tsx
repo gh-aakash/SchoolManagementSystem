@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createFeeStructure } from '../actions'
+import { createFeeStructure, deleteFeeStructure } from '../actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,6 +36,17 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
         }
     }
 
+    async function handleDelete(id: string) {
+        if (!confirm('Are you sure? This will delete assigned fees for students as well.')) return
+
+        const result = await deleteFeeStructure(id)
+        if (result?.error) {
+            toast.error(result.error)
+        } else {
+            toast.success('Fee structure deleted')
+        }
+    }
+
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -50,17 +61,23 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
                         </DialogHeader>
                         <form action={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="class_id">Class</Label>
-                                <Select name="class_id" required>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Class" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {classes.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Label>Classes</Label>
+                                <div className="border rounded-md p-4 h-48 overflow-y-auto space-y-2">
+                                    {classes.map((c) => (
+                                        <div key={c.id} className="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                id={`class_${c.id}`}
+                                                name="class_ids"
+                                                value={c.id}
+                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                            <Label htmlFor={`class_${c.id}`} className="text-sm font-normal cursor-pointer">
+                                                {c.name}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="fee_head_id">Fee Head</Label>
@@ -98,6 +115,7 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
                             <TableHead>Fee Head</TableHead>
                             <TableHead>Amount</TableHead>
                             <TableHead>Due Date</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -107,11 +125,20 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
                                 <TableCell>{s.fee_head?.name}</TableCell>
                                 <TableCell>₹{s.amount}</TableCell>
                                 <TableCell>{s.due_date ? new Date(s.due_date).toLocaleDateString() : '-'}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleDelete(s.id)}
+                                    >
+                                        Delete
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         ))}
                         {structures.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                <TableCell colSpan={5} className="text-center text-muted-foreground">
                                     No fee structures found.
                                 </TableCell>
                             </TableRow>
@@ -119,6 +146,6 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
                     </TableBody>
                 </Table>
             </CardContent>
-        </Card>
+        </Card >
     )
 }

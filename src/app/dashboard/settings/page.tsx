@@ -1,6 +1,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { SchoolProfile } from './school-profile'
+import { SyncClasses } from './sync-classes'
 import { AcademicYears } from './academic-years'
 import { Separator } from '@/components/ui/separator'
 
@@ -48,6 +49,7 @@ export default async function SettingsPage() {
             </div>
             <Separator />
             <SchoolProfile school={school} />
+            <SyncClasses />
             <AcademicYears years={years || []} />
         </div>
     )

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { checkAndRunAutomations } from '../automations/actions'
 
 export async function createFeeHead(formData: FormData) {
     const supabase = createClient()
@@ -48,13 +49,13 @@ export async function createFeeStructure(formData: FormData) {
 
     if (!profile?.school_id) return { error: 'No school linked' }
 
-    const classId = formData.get('class_id') as string
+    const classIds = formData.getAll('class_ids') as string[]
     const feeHeadId = formData.get('fee_head_id') as string
     const amount = formData.get('amount') as string
     const dueDate = formData.get('due_date') as string
 
-    if (!classId || !feeHeadId || !amount || !dueDate) {
-        return { error: 'All fields are required' }
+    if (classIds.length === 0 || !feeHeadId || !amount || !dueDate) {
+        return { error: 'Please select at least one class and fill all fields' }
     }
 
     // Get Active Academic Year
@@ -67,21 +68,23 @@ export async function createFeeStructure(formData: FormData) {
 
     if (!activeYear) return { error: 'No active academic year found' }
 
+    const feeStructures = classIds.map(classId => ({
+        school_id: profile.school_id,
+        class_id: classId,
+        fee_head_id: feeHeadId,
+        academic_year_id: activeYear.id,
+        amount: parseFloat(amount),
+        due_date: dueDate
+    }))
+
     const { error } = await supabase
         .from('fee_structures')
-        .insert({
-            school_id: profile.school_id,
-            class_id: classId,
-            fee_head_id: feeHeadId,
-            academic_year_id: activeYear.id,
-            amount: parseFloat(amount),
-            due_date: dueDate
-        })
+        .insert(feeStructures)
 
     if (error) return { error: error.message }
 
     revalidatePath('/dashboard/fees/structure')
-    return { message: 'Fee Structure created' }
+    return { message: `Fee Structure created for ${classIds.length} classes` }
 }
 
 export async function collectFee(formData: FormData) {
@@ -106,7 +109,11 @@ export async function collectFee(formData: FormData) {
         return { error: 'Required fields missing' }
     }
 
-    const { error } = await supabase
+    // import { checkAndRunAutomations } from '../automations/actions' // Moved to top
+
+    // ...
+
+    const { data: transaction, error } = await supabase
         .from('fee_transactions')
         .insert({
             school_id: profile.school_id,
@@ -115,11 +122,74 @@ export async function collectFee(formData: FormData) {
             payment_mode: paymentMode,
             remarks
         })
+        .select('id')
+        .single()
 
     if (error) return { error: error.message }
 
+    // Update Student Fee Status
+    // 1. Get all fees for this student
+    const { data: studentFees } = await supabase
+        .from('student_fees')
+        .select('*')
+        .eq('student_id', studentId)
+        .eq('status', 'pending') // Or partial
+        .order('created_at', { ascending: true })
+
+    if (studentFees && studentFees.length > 0) {
+        let remainingPayment = parseFloat(amount)
+
+        for (const fee of studentFees) {
+            if (remainingPayment <= 0) break
+
+            const due = fee.amount_due - (fee.amount_paid || 0)
+            const payAmount = Math.min(remainingPayment, due)
+
+            const newPaid = (fee.amount_paid || 0) + payAmount
+            const newStatus = newPaid >= fee.amount_due ? 'paid' : 'partial'
+
+            await supabase
+                .from('student_fees')
+                .update({
+                    amount_paid: newPaid,
+                    status: newStatus
+                })
+                .eq('id', fee.id)
+
+            remainingPayment -= payAmount
+        }
+    }
+
+    // Trigger Automation: FEE_PAID
+    // Fetch student details for context
+    const { data: student } = await supabase
+        .from('students')
+        .select('*, classes(name), sections(name)')
+        .eq('id', studentId)
+        .single()
+
+    if (student) {
+        const context = {
+            school_id: profile.school_id,
+            student: {
+                ...student,
+                class_id: student.classes?.name, // Use name for easier matching? Or ID. Let's use ID in rule builder but name here might be easier for "Class 10"
+                section_id: student.sections?.name
+            },
+            fee: {
+                amount_paid: parseFloat(amount),
+                payment_mode: paymentMode,
+                last_payment_date: new Date().toISOString()
+            },
+            phone: student.father_phone || student.mother_phone // For WhatsApp
+        }
+
+        // Run in background (don't await to block UI)
+        checkAndRunAutomations('FEE_PAID', context).catch(console.error)
+    }
+
     revalidatePath('/dashboard/fees/collect')
-    return { message: 'Fee collected successfully' }
+    return { message: 'Fee collected successfully', data: transaction }
 }
 
 export async function assignFeeToClass(formData: FormData) {
@@ -233,4 +303,20 @@ export async function assignFeeToClass(formData: FormData) {
 
     revalidatePath('/dashboard/fees/assign')
     return { message: `Successfully assigned fee to ${assignedCount} students.` }
+}
+
+export async function deleteFeeStructure(id: string) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { error } = await supabase
+        .from('fee_structures')
+        .delete()
+        .eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard/fees/structure')
+    return { message: 'Fee structure deleted' }
 }

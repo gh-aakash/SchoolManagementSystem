@@ -350,8 +350,8 @@ begin
     );
 
     -- 3. SEED INITIAL DATA
-    -- Create Classes 1 to 10
-    for i in 1..10 loop
+    -- Create Classes 1 to 12
+    for i in 1..12 loop
       insert into public.classes (school_id, name, order_index)
       values (new_school_id, 'Class ' || i, i)
       returning id into new_class_id;
@@ -454,3 +454,41 @@ CREATE POLICY "Tenant Isolation for Recipients" ON notification_recipients
             SELECT id FROM notifications WHERE school_id = (SELECT school_id FROM user_profiles WHERE user_profiles.id = auth.uid())
         )
     );
+-- 9. AUTOMATIONS
+create table public.automations (
+  id uuid not null default gen_random_uuid(),
+  school_id uuid not null references public.schools(id) on delete cascade,
+  name text not null,
+  description text,
+  trigger_type text not null, -- 'FEE_DUE', 'NEW_ADMISSION', 'ATTENDANCE_LOW'
+  conditions jsonb not null default '[]'::jsonb, -- Recursive AND/OR structure
+  actions jsonb not null default '[]'::jsonb, -- Array of actions
+  is_active boolean default true,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  
+  constraint automations_pkey primary key (id)
+);
+
+-- RLS for Automations
+alter table public.automations enable row level security;
+
+create policy "Users can view their school's automations"
+on public.automations for select
+to authenticated
+using (school_id in (select school_id from public.user_profiles where user_id = auth.uid()));
+
+create policy "Users can insert their school's automations"
+on public.automations for insert
+to authenticated
+with check (school_id in (select school_id from public.user_profiles where user_id = auth.uid()));
+
+create policy "Users can update their school's automations"
+on public.automations for update
+to authenticated
+using (school_id in (select school_id from public.user_profiles where user_id = auth.uid()));
+
+create policy "Users can delete their school's automations"
+on public.automations for delete
+to authenticated
+using (school_id in (select school_id from public.user_profiles where user_id = auth.uid()));

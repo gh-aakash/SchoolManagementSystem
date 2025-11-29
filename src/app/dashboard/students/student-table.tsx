@@ -25,13 +25,19 @@ import {
 import { MoreHorizontal, Trash, ArrowUpCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { autoAllocateRollNumbers } from './actions'
+import { Loader2 } from 'lucide-react'
+
 interface StudentTableProps {
     students: any[]
+    classId?: string
+    sectionId?: string
 }
 
-export function StudentTable({ students }: StudentTableProps) {
+export function StudentTable({ students, classId, sectionId }: StudentTableProps) {
     const router = useRouter()
     const [selectedIds, setSelectedIds] = useState<string[]>([])
+    const [isAllocating, setIsAllocating] = useState(false)
 
     function toggleSelectAll() {
         if (selectedIds.length === students.length) {
@@ -56,20 +62,43 @@ export function StudentTable({ students }: StudentTableProps) {
         toast.info('Bulk delete not implemented yet')
     }
 
+    async function handleAutoAllocate() {
+        if (!classId || !sectionId) return
+        setIsAllocating(true)
+        const result = await autoAllocateRollNumbers(classId, sectionId)
+        setIsAllocating(false)
+        if (result.success) {
+            toast.success(result.message)
+        } else {
+            toast.error(result.error)
+        }
+    }
+
     return (
         <div className="space-y-4">
-            {/* Bulk Actions Toolbar */}
-            {selectedIds.length > 0 && (
-                <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-2">
-                    <span className="text-sm font-medium px-2">{selectedIds.length} selected</span>
-                    <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
-                        <Trash className="mr-2 h-4 w-4" /> Delete
+            <div className="flex justify-between items-center">
+                {/* Bulk Actions Toolbar */}
+                {selectedIds.length > 0 ? (
+                    <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-2">
+                        <span className="text-sm font-medium px-2">{selectedIds.length} selected</span>
+                        <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                            <Trash className="mr-2 h-4 w-4" /> Delete
+                        </Button>
+                        <Button size="sm" variant="outline">
+                            <ArrowUpCircle className="mr-2 h-4 w-4" /> Promote
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="flex-1"></div>
+                )}
+
+                {/* Auto Allocate Button (Only when filtered by Class & Section) */}
+                {classId && sectionId && (
+                    <Button variant="outline" size="sm" onClick={handleAutoAllocate} disabled={isAllocating}>
+                        {isAllocating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Auto-Allocate Roll No'}
                     </Button>
-                    <Button size="sm" variant="outline">
-                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Promote
-                    </Button>
-                </div>
-            )}
+                )}
+            </div>
 
             <div className="rounded-md border">
                 <Table>
@@ -83,6 +112,7 @@ export function StudentTable({ students }: StudentTableProps) {
                             </TableHead>
                             <TableHead>Student</TableHead>
                             <TableHead>Admission No</TableHead>
+                            <TableHead>Roll No</TableHead>
                             <TableHead>Class</TableHead>
                             <TableHead>Father's Name</TableHead>
                             <TableHead>Status</TableHead>
@@ -105,12 +135,23 @@ export function StudentTable({ students }: StudentTableProps) {
                                             <AvatarFallback>{student.first_name[0]}{student.last_name?.[0]}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <div className="font-medium">{student.first_name} {student.last_name}</div>
+                                            <div className="font-medium flex items-center gap-2">
+                                                {student.first_name} {student.last_name}
+                                                {student.attendance_pct !== undefined && (
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${student.attendance_pct >= 75 ? 'bg-green-100 text-green-700' :
+                                                            student.attendance_pct >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                                                                'bg-red-100 text-red-700'
+                                                        }`}>
+                                                        {student.attendance_pct}%
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="text-xs text-muted-foreground">{student.gender}</div>
                                         </div>
                                     </Link>
                                 </TableCell>
                                 <TableCell>{student.admission_no}</TableCell>
+                                <TableCell>{student.roll_no || '-'}</TableCell>
                                 <TableCell>
                                     {student.class?.name} - {student.section?.name}
                                 </TableCell>
@@ -143,7 +184,7 @@ export function StudentTable({ students }: StudentTableProps) {
                         ))}
                         {students.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                     No students found matching your filters.
                                 </TableCell>
                             </TableRow>

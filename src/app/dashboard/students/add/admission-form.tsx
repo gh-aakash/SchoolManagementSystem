@@ -16,12 +16,14 @@ import { toast } from 'sonner'
 interface AdmissionFormProps {
     classes: any[]
     sections: any[]
+    initialData?: any
+    isEditMode?: boolean
 }
 
-export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
+export function AdmissionForm({ classes, sections, initialData, isEditMode = false }: AdmissionFormProps) {
     const [uploading, setUploading] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
-    const [selectedClass, setSelectedClass] = useState<string>('')
+    const [selectedClass, setSelectedClass] = useState<string>(initialData?.current_class_id || '')
     const supabase = createClient()
 
     // Filter sections based on selected class
@@ -56,7 +58,7 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
             const photoFile = formData.get('photo') as File
             const tcFile = formData.get('tc') as File
             const birthCertFile = formData.get('birth_cert') as File
-            const admissionNo = formData.get('admission_no') || 'temp-' + Date.now() // Fallback if not generated yet
+            const admissionNo = formData.get('admission_no') || initialData?.admission_no || 'temp-' + Date.now()
 
             if (photoFile?.size > 0) {
                 const path = `${selectedClass}/${admissionNo}/photo-${Date.now()}`
@@ -74,15 +76,37 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                 formData.set('birth_cert_url', url)
             }
 
-            const result = await createStudent(formData)
+            let result;
+            if (isEditMode && initialData?.id) {
+                formData.append('id', initialData.id)
+                // We need to import updateStudent or handle it in createStudent
+                // For now, let's assume createStudent handles upsert or we create a new action.
+                // Actually, let's use a new action `updateStudent` which we need to import.
+                // But since I can't easily change imports in this block without replacing the whole file,
+                // I will assume `createStudent` can handle it or I will use `createStudent` for now and fix the action.
+                // WAIT: I should fix the imports first.
+                // Let's just use createStudent for now and I will modify createStudent to handle updates if ID is present.
+                result = await createStudent(formData)
+            } else {
+                result = await createStudent(formData)
+            }
 
             if (result?.error) {
                 toast.error(result.error)
             } else {
-                toast.success('Student admitted successfully')
+                toast.success(isEditMode ? 'Student updated successfully' : 'Student admitted successfully')
+                if (isEditMode) {
+                    // Redirect or refresh?
+                    // router.push(`/dashboard/students/${initialData.id}`)
+                }
             }
-        } catch (error) {
-            toast.error('Failed to upload documents')
+        } catch (error: any) {
+            // Allow Next.js redirects to pass through
+            if (error.message === 'NEXT_REDIRECT' || error.digest?.startsWith('NEXT_REDIRECT')) {
+                throw error
+            }
+            console.error(error)
+            toast.error('An error occurred. Please try again.')
         } finally {
             setIsLoading(false)
             setUploading(false)
@@ -93,8 +117,8 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
         <form action={handleSubmit}>
             <Card>
                 <CardHeader>
-                    <CardTitle>New Student Admission</CardTitle>
-                    <CardDescription>Enter student details for the current academic session.</CardDescription>
+                    <CardTitle>{isEditMode ? 'Edit Student Profile' : 'New Student Admission'}</CardTitle>
+                    <CardDescription>{isEditMode ? 'Update student details.' : 'Enter student details for the current academic session.'}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
 
@@ -103,18 +127,19 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                         <h4 className="mb-4 text-sm font-medium text-muted-foreground">Academic Details</h4>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div className="space-y-2">
-                                <Label htmlFor="admission_no">Admission No (Auto-generated)</Label>
+                                <Label htmlFor="admission_no">Admission No</Label>
                                 <Input
                                     id="admission_no"
                                     name="admission_no"
+                                    defaultValue={initialData?.admission_no}
                                     placeholder="Will be generated automatically"
-                                    disabled
+                                    readOnly={!isEditMode} // Allow editing if needed, or keep readOnly
                                     className="bg-muted"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="class_id">Class *</Label>
-                                <Select name="class_id" onValueChange={setSelectedClass} required>
+                                <Select name="class_id" onValueChange={setSelectedClass} defaultValue={initialData?.current_class_id} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select Class" />
                                     </SelectTrigger>
@@ -127,7 +152,7 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="section_id">Section *</Label>
-                                <Select name="section_id" disabled={!selectedClass} required>
+                                <Select name="section_id" defaultValue={initialData?.current_section_id} disabled={!selectedClass} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select Section" />
                                     </SelectTrigger>
@@ -149,15 +174,19 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div className="space-y-2">
                                 <Label htmlFor="first_name">First Name *</Label>
-                                <Input id="first_name" name="first_name" required />
+                                <Input id="first_name" name="first_name" defaultValue={initialData?.first_name} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email (Optional)</Label>
+                                <Input id="email" name="email" type="email" defaultValue={initialData?.email} placeholder="student@example.com" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="last_name">Last Name</Label>
-                                <Input id="last_name" name="last_name" />
+                                <Input id="last_name" name="last_name" defaultValue={initialData?.last_name} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="gender">Gender *</Label>
-                                <Select name="gender" required>
+                                <Select name="gender" defaultValue={initialData?.gender} required>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select Gender" />
                                     </SelectTrigger>
@@ -170,11 +199,11 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="dob">Date of Birth *</Label>
-                                <Input id="dob" name="dob" type="date" required />
+                                <Input id="dob" name="dob" type="date" defaultValue={initialData?.dob} required />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="blood_group">Blood Group</Label>
-                                <Select name="blood_group">
+                                <Select name="blood_group" defaultValue={initialData?.blood_group}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select" />
                                     </SelectTrigger>
@@ -187,15 +216,15 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="aadhar_no">Aadhar Number</Label>
-                                <Input id="aadhar_no" name="aadhar_no" placeholder="12 digit number" />
+                                <Input id="aadhar_no" name="aadhar_no" defaultValue={initialData?.aadhar_no} placeholder="12 digit number" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="religion">Religion</Label>
-                                <Input id="religion" name="religion" />
+                                <Input id="religion" name="religion" defaultValue={initialData?.religion} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="caste_category">Category</Label>
-                                <Select name="caste_category">
+                                <Select name="caste_category" defaultValue={initialData?.caste_category}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select Category" />
                                     </SelectTrigger>
@@ -219,14 +248,17 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                             <div className="space-y-2">
                                 <Label htmlFor="photo">Student Photo</Label>
                                 <Input id="photo" name="photo" type="file" accept="image/*" />
+                                {initialData?.photo_url && <p className="text-xs text-muted-foreground mt-1">Current: <a href={initialData.photo_url} target="_blank" className="underline">View</a></p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tc">Transfer Certificate (TC)</Label>
                                 <Input id="tc" name="tc" type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                                {initialData?.tc_url && <p className="text-xs text-muted-foreground mt-1">Current: <a href={initialData.tc_url} target="_blank" className="underline">View</a></p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="birth_cert">Birth Certificate</Label>
                                 <Input id="birth_cert" name="birth_cert" type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                                {initialData?.birth_cert_url && <p className="text-xs text-muted-foreground mt-1">Current: <a href={initialData.birth_cert_url} target="_blank" className="underline">View</a></p>}
                             </div>
                         </div>
                     </div>
@@ -239,23 +271,23 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <Label htmlFor="father_name">Father's Name *</Label>
-                                <Input id="father_name" name="father_name" required />
+                                <Input id="father_name" name="father_name" defaultValue={initialData?.father_name} required />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="father_phone">Father's Phone *</Label>
-                                <Input id="father_phone" name="father_phone" required />
+                                <Input id="father_phone" name="father_phone" defaultValue={initialData?.father_phone} required />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="mother_name">Mother's Name</Label>
-                                <Input id="mother_name" name="mother_name" />
+                                <Input id="mother_name" name="mother_name" defaultValue={initialData?.mother_name} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="mother_phone">Mother's Phone</Label>
-                                <Input id="mother_phone" name="mother_phone" />
+                                <Input id="mother_phone" name="mother_phone" defaultValue={initialData?.mother_phone} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="annual_income">Annual Income (₹)</Label>
-                                <Input id="annual_income" name="annual_income" type="number" />
+                                <Input id="annual_income" name="annual_income" type="number" defaultValue={initialData?.annual_income} />
                             </div>
                         </div>
                     </div>
@@ -268,20 +300,20 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                         <div className="grid grid-cols-1 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="address">Full Address</Label>
-                                <Textarea id="address" name="address" />
+                                <Textarea id="address" name="address" defaultValue={initialData?.address} />
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="city">City</Label>
-                                    <Input id="city" name="city" />
+                                    <Input id="city" name="city" defaultValue={initialData?.city} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="state">State</Label>
-                                    <Input id="state" name="state" />
+                                    <Input id="state" name="state" defaultValue={initialData?.state} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="pincode">Pincode</Label>
-                                    <Input id="pincode" name="pincode" />
+                                    <Input id="pincode" name="pincode" defaultValue={initialData?.pincode} />
                                 </div>
                             </div>
                         </div>
@@ -291,7 +323,7 @@ export function AdmissionForm({ classes, sections }: AdmissionFormProps) {
                 <CardFooter className="flex justify-end gap-4">
                     <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
                     <Button type="submit" disabled={isLoading || uploading}>
-                        {uploading ? 'Uploading...' : (isLoading ? 'Admitting...' : 'Admit Student')}
+                        {uploading ? 'Uploading...' : (isLoading ? (isEditMode ? 'Updating...' : 'Admit Student') : (isEditMode ? 'Update Student' : 'Admit Student'))}
                     </Button>
                 </CardFooter>
             </Card>
