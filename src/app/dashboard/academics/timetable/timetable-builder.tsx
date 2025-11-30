@@ -121,6 +121,29 @@ export function TimetableBuilder({ classes, initialPeriods, subjects, teachers }
         })
     }
 
+    function handleDuplicate(sourceDay: number, targetDays: number[]) {
+        const newTimetable = { ...timetable }
+
+        // Get entries for source day
+        const sourceEntries = Object.values(timetable).filter(t => t.day_of_week === sourceDay)
+
+        targetDays.forEach(targetDay => {
+            // Clear existing entries for target day first? Or just overwrite?
+            // Let's overwrite matching periods.
+
+            sourceEntries.forEach(entry => {
+                const key = `${targetDay}-${entry.period_id}`
+                newTimetable[key] = {
+                    ...entry,
+                    day_of_week: targetDay
+                }
+            })
+        })
+
+        setTimetable(newTimetable)
+        toast.success('Timetable duplicated successfully')
+    }
+
     return (
         <DndContext onDragStart={(e) => setActiveDragId(e.active.id as string)} onDragEnd={handleDragEnd}>
             <div className="space-y-6">
@@ -156,6 +179,7 @@ export function TimetableBuilder({ classes, initialPeriods, subjects, teachers }
                             </div>
                             <div className="flex gap-2">
                                 <AddPeriodDialog onAdd={(p) => setPeriods([...periods, p])} />
+                                <DuplicateDayDialog onDuplicate={handleDuplicate} />
                             </div>
                         </div>
                     </CardContent>
@@ -358,6 +382,87 @@ function AddPeriodDialog({ onAdd }: { onAdd: (p: Period) => void }) {
                         <Button type="submit" disabled={isLoading}>Add Period</Button>
                     </DialogFooter>
                 </form>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+import { Copy } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+
+function DuplicateDayDialog({ onDuplicate }: { onDuplicate: (source: number, targets: number[]) => void }) {
+    const [open, setOpen] = useState(false)
+    const [sourceDay, setSourceDay] = useState<string>('1')
+    const [targetDays, setTargetDays] = useState<number[]>([])
+
+    function handleDuplicate() {
+        if (targetDays.length === 0) {
+            toast.error('Select at least one target day')
+            return
+        }
+        onDuplicate(parseInt(sourceDay), targetDays)
+        setOpen(false)
+        setTargetDays([])
+    }
+
+    function toggleTarget(day: number) {
+        if (targetDays.includes(day)) {
+            setTargetDays(targetDays.filter(d => d !== day))
+        } else {
+            setTargetDays([...targetDays, day])
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <Copy className="mr-2 h-4 w-4" /> Duplicate Day
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Duplicate Schedule</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label>Copy From</Label>
+                        <Select value={sourceDay} onValueChange={setSourceDay}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {DAYS.map(day => (
+                                    <SelectItem key={day.value} value={day.value.toString()}>{day.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Copy To</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {DAYS.map(day => (
+                                <div key={day.value} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`day-${day.value}`}
+                                        checked={targetDays.includes(day.value)}
+                                        onCheckedChange={() => toggleTarget(day.value)}
+                                        disabled={day.value.toString() === sourceDay}
+                                    />
+                                    <label
+                                        htmlFor={`day-${day.value}`}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        {day.label}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleDuplicate}>Duplicate</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )

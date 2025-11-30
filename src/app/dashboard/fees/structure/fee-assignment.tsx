@@ -2,7 +2,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createFeeStructure, deleteFeeStructure } from '../actions'
+import { createFeeStructure, deleteFeeStructure, syncFeeStructure } from '../actions'
+import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface FeeStructureProps {
@@ -22,6 +23,7 @@ interface FeeStructureProps {
 export function FeeStructureList({ structures, classes, heads }: FeeStructureProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [assignmentType, setAssignmentType] = useState<'one-time' | 'monthly'>('one-time')
 
     async function handleSubmit(formData: FormData) {
         setIsLoading(true)
@@ -45,6 +47,14 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
         } else {
             toast.success('Fee structure deleted')
         }
+    }
+
+    async function handleSync(id: string) {
+        toast.promise(syncFeeStructure(id), {
+            loading: 'Syncing fees...',
+            success: (data: any) => data.message,
+            error: (err: any) => err.message || 'Failed to sync'
+        })
     }
 
     return (
@@ -97,9 +107,57 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
                                 <Input id="amount" name="amount" type="number" required />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="due_date">Due Date</Label>
-                                <Input id="due_date" name="due_date" type="date" />
+                                <Label>Frequency</Label>
+                                <Select
+                                    defaultValue="one-time"
+                                    onValueChange={(v) => setAssignmentType(v as 'one-time' | 'monthly')}
+                                    name="frequency"
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="one-time">One-time (Specific Date)</SelectItem>
+                                        <SelectItem value="monthly">Monthly (Select Months)</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
+
+                            {assignmentType === 'monthly' && (
+                                <div className="space-y-2">
+                                    <Label>Select Months</Label>
+                                    <div className="grid grid-cols-3 gap-2 border rounded-md p-4">
+                                        {[
+                                            { v: '4', l: 'Apr' }, { v: '5', l: 'May' }, { v: '6', l: 'Jun' },
+                                            { v: '7', l: 'Jul' }, { v: '8', l: 'Aug' }, { v: '9', l: 'Sep' },
+                                            { v: '10', l: 'Oct' }, { v: '11', l: 'Nov' }, { v: '12', l: 'Dec' },
+                                            { v: '1', l: 'Jan' }, { v: '2', l: 'Feb' }, { v: '3', l: 'Mar' },
+                                        ].map((m) => (
+                                            <div key={m.v} className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`month_${m.v}`}
+                                                    name="months"
+                                                    value={m.v}
+                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                />
+                                                <Label htmlFor={`month_${m.v}`} className="text-sm font-normal cursor-pointer">
+                                                    {m.l}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Fees will be due on the 10th of each selected month.</p>
+                                </div>
+                            )}
+
+                            {assignmentType === 'one-time' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="due_date">Due Date</Label>
+                                    <Input id="due_date" name="due_date" type="date" required />
+                                </div>
+                            )}
+
                             <Button type="submit" className="w-full" disabled={isLoading}>
                                 {isLoading ? 'Assigning...' : 'Assign Fee'}
                             </Button>
@@ -124,8 +182,16 @@ export function FeeStructureList({ structures, classes, heads }: FeeStructurePro
                                 <TableCell>{s.class?.name}</TableCell>
                                 <TableCell>{s.fee_head?.name}</TableCell>
                                 <TableCell>₹{s.amount}</TableCell>
-                                <TableCell>{s.due_date ? new Date(s.due_date).toLocaleDateString() : '-'}</TableCell>
+                                <TableCell>{s.due_date ? format(new Date(s.due_date), 'dd MMM yyyy') : '-'}</TableCell>
                                 <TableCell className="text-right">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleSync(s.id)}
+                                        className="mr-2"
+                                    >
+                                        <RefreshCw className="mr-2 h-3 w-3" /> Sync
+                                    </Button>
                                     <Button
                                         variant="destructive"
                                         size="sm"

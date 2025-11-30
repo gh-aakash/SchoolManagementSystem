@@ -27,6 +27,9 @@ import { toast } from 'sonner'
 
 import { autoAllocateRollNumbers } from './actions'
 import { Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
+
+const MotionTableRow = motion(TableRow)
 
 interface StudentTableProps {
     students: any[]
@@ -120,8 +123,13 @@ export function StudentTable({ students, classId, sectionId }: StudentTableProps
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {students.map((student) => (
-                            <TableRow key={student.id}>
+                        {students.map((student, index) => (
+                            <MotionTableRow
+                                key={student.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.05 }}
+                            >
                                 <TableCell>
                                     <Checkbox
                                         checked={selectedIds.includes(student.id)}
@@ -139,8 +147,8 @@ export function StudentTable({ students, classId, sectionId }: StudentTableProps
                                                 {student.first_name} {student.last_name}
                                                 {student.attendance_pct !== undefined && (
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${student.attendance_pct >= 75 ? 'bg-green-100 text-green-700' :
-                                                            student.attendance_pct >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                                                                'bg-red-100 text-red-700'
+                                                        student.attendance_pct >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                                                            'bg-red-100 text-red-700'
                                                         }`}>
                                                         {student.attendance_pct}%
                                                     </span>
@@ -180,7 +188,7 @@ export function StudentTable({ students, classId, sectionId }: StudentTableProps
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
-                            </TableRow>
+                            </MotionTableRow>
                         ))}
                         {students.length === 0 && (
                             <TableRow>

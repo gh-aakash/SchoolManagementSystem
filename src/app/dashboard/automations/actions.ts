@@ -81,6 +81,50 @@ export async function deleteAutomation(id: string) {
     return { success: true }
 }
 
+export async function toggleAutomationStatus(id: string, isActive: boolean) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { error } = await supabase
+        .from('automations')
+        .update({ is_active: isActive })
+        .eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard/automations')
+    return { success: true }
+}
+
+export async function batchUpdateAutomations(ids: string[], action: 'activate' | 'deactivate' | 'delete') {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    let error;
+
+    if (action === 'delete') {
+        const { error: deleteError } = await supabase
+            .from('automations')
+            .delete()
+            .in('id', ids)
+        error = deleteError
+    } else {
+        const isActive = action === 'activate'
+        const { error: updateError } = await supabase
+            .from('automations')
+            .update({ is_active: isActive })
+            .in('id', ids)
+        error = updateError
+    }
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard/automations')
+    return { success: true }
+}
+
 // --- Evaluation Logic ---
 
 export async function checkAndRunAutomations(triggerType: string, context: any) {
