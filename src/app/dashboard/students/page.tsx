@@ -1,5 +1,6 @@
 
 import { createClient } from '@/lib/supabase/server'
+import { gatewayFetch } from '@/lib/gateway'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
@@ -33,76 +34,46 @@ export default async function StudentsPage({
         .single()
 
     if (!profile?.school_id) return <div>No school linked</div>
+    const schoolId = profile.school_id
 
     // Fetch Classes and Sections for Filters
-    const { data: classes } = await supabase
-        .from('classes')
-        .select('id, name')
-        .eq('school_id', profile.school_id)
-        .order('order_index')
+    const classes = await gatewayFetch(`/api/sis/classes?school_id=${schoolId}`)
+    const sections = await gatewayFetch(`/api/sis/sections?school_id=${schoolId}`) // Need to add sections endpoint to SIS
 
-    const { data: sections } = await supabase
-        .from('sections')
-        .select('id, name, class_id')
-        .eq('school_id', profile.school_id)
-        .order('name')
+    // Build Query Params with Filters
+    const search = (searchParams.search as string) || ''
+    const classId = (searchParams.class_id as string) || 'all'
+    const sectionId = (searchParams.section_id as string) || 'all'
+    const gender = (searchParams.gender as string) || 'all'
 
-    // Build Query with Filters
-    let query = supabase
-        .from('students')
-        .select(`
-      *,
-      class:classes(name),
-      section:sections(name)
-    `)
-        .eq('school_id', profile.school_id)
-        .order('created_at', { ascending: false })
+    const queryParams = new URLSearchParams({
+        school_id: schoolId,
+        search,
+        class_id: classId,
+        section_id: sectionId,
+        gender
+    })
 
-    // Apply Filters
-    const search = searchParams.search as string
-    const classId = searchParams.class_id as string
-    const sectionId = searchParams.section_id as string
-    const gender = searchParams.gender as string
+    const students = await gatewayFetch(`/api/sis/students?${queryParams.toString()}`)
 
-    if (search) {
-        query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,admission_no.ilike.%${search}%`)
-    }
-    if (classId && classId !== 'all') {
-        query = query.eq('current_class_id', classId)
-    }
-    if (sectionId && sectionId !== 'all') {
-        query = query.eq('current_section_id', sectionId)
-    }
-    if (gender && gender !== 'all') {
-        query = query.eq('gender', gender)
-    }
-
-    const { data: students } = await query
-
-    // Fetch Attendance Stats
+    // Fetch Attendance Stats via Engagement service
     let studentsWithStats = students || []
     if (students && students.length > 0) {
-        const studentIds = students.map(s => s.id)
-        const { data: attendance } = await supabase
-            .from('attendance')
-            .select('student_id, status')
-            .in('student_id', studentIds)
-            .eq('school_id', profile.school_id)
-
-        if (attendance) {
-            const statsMap: Record<string, { total: number, present: number }> = {}
-            attendance.forEach(a => {
-                if (!statsMap[a.student_id]) statsMap[a.student_id] = { total: 0, present: 0 }
-                statsMap[a.student_id].total++
-                if (a.status === 'Present') statsMap[a.student_id].present++
+        try {
+            const studentIds = students.map((s: any) => s.id)
+            const statsMap = await gatewayFetch('/api/engagement/attendance/stats', {
+                method: 'POST',
+                body: JSON.stringify({ school_id: schoolId, student_ids: studentIds })
             })
 
-            studentsWithStats = students.map(s => ({
+            studentsWithStats = students.map((s: any) => ({
                 ...s,
                 attendance_pct: statsMap[s.id]
                     ? Math.round((statsMap[s.id].present / statsMap[s.id].total) * 100)
                     : 0
             }))
+        } catch (error) {
+            console.error('Fetch Attendance Stats Error:', error)
         }
     }
 

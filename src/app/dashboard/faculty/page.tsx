@@ -1,5 +1,6 @@
 
 import { createClient } from '@/lib/supabase/server'
+import { gatewayFetch } from '@/lib/gateway'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
@@ -19,12 +20,12 @@ export default async function FacultyPage() {
 
     if (!profile?.school_id) return <div>No school linked</div>
 
-    // Fetch Staff (formerly Teachers)
-    const { data: staff } = await supabase
-        .from('staff')
-        .select('*')
-        .eq('school_id', profile.school_id)
-        .order('first_name')
+    let staff = []
+    try {
+        staff = await gatewayFetch(`/api/identity/staff?school_id=${profile.school_id}`)
+    } catch (error) {
+        console.error('Fetch Staff Error:', error)
+    }
 
     return (
         <div className="space-y-6">

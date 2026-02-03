@@ -1,8 +1,6 @@
-
-'use server'
-
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { gatewayFetch } from '@/lib/gateway'
 
 export async function createStaff(formData: FormData) {
     const supabase = createClient()
@@ -27,26 +25,27 @@ export async function createStaff(formData: FormData) {
 
     if (!firstName) return { error: 'First Name is required' }
 
-    const { error } = await supabase
-        .from('staff')
-        .insert({
-            school_id: profile.school_id,
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            phone,
-            qualification,
-            designation: designation || 'Teacher',
-            joining_date: joiningDate || null
+    try {
+        await gatewayFetch('/api/identity/staff', {
+            method: 'POST',
+            body: JSON.stringify({
+                school_id: profile.school_id,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                phone,
+                qualification,
+                designation: designation || 'Teacher',
+                joining_date: joiningDate || null
+            })
         })
 
-    if (error) {
+        revalidatePath('/dashboard/faculty')
+        return { success: true }
+    } catch (error: any) {
         console.error('Create Staff Error:', error)
         return { error: error.message }
     }
-
-    revalidatePath('/dashboard/faculty')
-    return { success: true }
 }
 
 export async function updateStaff(formData: FormData) {
@@ -63,23 +62,26 @@ export async function updateStaff(formData: FormData) {
     const designation = formData.get('designation') as string
     const joiningDate = formData.get('joiningDate') as string
 
-    const { error } = await supabase
-        .from('staff')
-        .update({
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            phone,
-            qualification,
-            designation,
-            joining_date: joiningDate || null
+    try {
+        await gatewayFetch(`/api/identity/staff/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                phone,
+                qualification,
+                designation,
+                joining_date: joiningDate || null
+            })
         })
-        .eq('id', id)
 
-    if (error) return { error: error.message }
-    revalidatePath('/dashboard/faculty')
-    revalidatePath(`/dashboard/faculty/${id}`)
-    return { success: true }
+        revalidatePath('/dashboard/faculty')
+        revalidatePath(`/dashboard/faculty/${id}`)
+        return { success: true }
+    } catch (error: any) {
+        return { error: error.message }
+    }
 }
 
 export async function deleteStaff(id: string) {
@@ -87,12 +89,14 @@ export async function deleteStaff(id: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
-    const { error } = await supabase
-        .from('staff')
-        .delete()
-        .eq('id', id)
+    try {
+        await gatewayFetch(`/api/identity/staff/${id}`, {
+            method: 'DELETE'
+        })
 
-    if (error) return { error: error.message }
-    revalidatePath('/dashboard/faculty')
-    return { success: true }
+        revalidatePath('/dashboard/faculty')
+        return { success: true }
+    } catch (error: any) {
+        return { error: error.message }
+    }
 }

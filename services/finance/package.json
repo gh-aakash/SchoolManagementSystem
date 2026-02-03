@@ -1,0 +1,16 @@
+{
+    "name": "finance",
+    "version": "1.0.0",
+    "main": "index.ts",
+    "scripts": {
+        "dev": "nodemon index.ts",
+        "start": "ts-node index.ts"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.3",
+        "shared": "*",
+        "razorpay": "^2.9.2"
+    }
+}

@@ -19,7 +19,7 @@ create table if not exists public.timetable (
   day_of_week integer not null check (day_of_week between 1 and 7), -- 1=Monday, 7=Sunday
   period_id uuid references class_periods(id) on delete cascade not null,
   subject_id uuid references subjects(id) on delete cascade, -- Nullable for breaks/free periods
-  teacher_id uuid references teachers(id) on delete set null, -- Nullable
+  teacher_id uuid references staff(id) on delete set null, -- Nullable
   created_at timestamptz default now(),
   
   unique(section_id, day_of_week, period_id) -- No double booking for a section

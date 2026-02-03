@@ -1,5 +1,5 @@
-
 import { createClient } from '@/lib/supabase/server'
+import { gatewayFetch } from '@/lib/gateway'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,32 +11,17 @@ export default async function FeesDashboardPage() {
 
     if (!user) return null
 
-    const { data: profile, error } = await supabase
+    const { data: profile } = await supabase
         .from('user_profiles')
-        .select('*') // Select all to see what we get
+        .select('school_id')
         .eq('id', user.id)
         .single()
 
-    if (!profile?.school_id) {
-        return (
-            <div className="flex h-[50vh] items-center justify-center">
-                <div className="text-center">
-                    <h2 className="text-lg font-semibold">No School Linked</h2>
-                    <p className="text-muted-foreground">Please contact your administrator.</p>
-                </div>
-            </div>
-        )
-    }
+    if (!profile?.school_id) return <div>No school linked</div>
 
-    // Fetch Today's Collection
-    const today = new Date().toISOString().split('T')[0]
-    const { data: transactions } = await supabase
-        .from('fee_transactions')
-        .select('amount')
-        .eq('school_id', profile.school_id)
-        .gte('payment_date', today)
-
-    const todaysCollection = transactions?.reduce((sum, t) => sum + t.amount, 0) || 0
+    // Fetch Stats via Finance Service
+    const stats = await gatewayFetch(`/api/finance/stats?school_id=${profile.school_id}`)
+    const todaysCollection = stats.todaysCollection || 0
 
     return (
         <div className="space-y-6">

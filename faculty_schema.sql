@@ -1,6 +1,6 @@
 
--- Teachers Table
-create table if not exists public.teachers (
+-- Staff Table
+create table if not exists public.staff (
   id uuid primary key default uuid_generate_v4(),
   school_id uuid references schools(id) on delete cascade not null,
   user_id uuid references auth.users(id) on delete set null, -- Optional link to auth user
@@ -8,7 +8,9 @@ create table if not exists public.teachers (
   last_name text,
   email text,
   phone text,
+  designation text default 'Teacher',
   qualification text,
+  photo_url text,
   joining_date date default CURRENT_DATE,
   is_active boolean default true,
   created_at timestamptz default now(),
@@ -29,7 +31,7 @@ create table if not exists public.subjects (
 create table if not exists public.teacher_subjects (
   id uuid primary key default uuid_generate_v4(),
   school_id uuid references schools(id) on delete cascade not null,
-  teacher_id uuid references teachers(id) on delete cascade not null,
+  teacher_id uuid references staff(id) on delete cascade not null,
   subject_id uuid references subjects(id) on delete cascade not null,
   created_at timestamptz default now(),
   
@@ -38,19 +40,19 @@ create table if not exists public.teacher_subjects (
 
 -- RLS Policies
 
--- Teachers
-alter table public.teachers enable row level security;
+-- Staff
+alter table public.staff enable row level security;
 
-create policy "Tenant Isolation Select Teachers" on public.teachers
+create policy "Tenant Isolation Select Staff" on public.staff
   for select using (school_id = (select school_id from user_profiles where id = auth.uid()));
 
-create policy "Tenant Isolation Insert Teachers" on public.teachers
+create policy "Tenant Isolation Insert Staff" on public.staff
   for insert with check (school_id = (select school_id from user_profiles where id = auth.uid()));
 
-create policy "Tenant Isolation Update Teachers" on public.teachers
+create policy "Tenant Isolation Update Staff" on public.staff
   for update using (school_id = (select school_id from user_profiles where id = auth.uid()));
 
-create policy "Tenant Isolation Delete Teachers" on public.teachers
+create policy "Tenant Isolation Delete Staff" on public.staff
   for delete using (school_id = (select school_id from user_profiles where id = auth.uid()));
 
 -- Subjects
@@ -81,9 +83,9 @@ create policy "Tenant Isolation Delete TeacherSubjects" on public.teacher_subjec
   for delete using (school_id = (select school_id from user_profiles where id = auth.uid()));
 
 -- Grants (Crucial for avoiding permission errors)
-grant all on public.teachers to authenticated;
-grant all on public.teachers to service_role;
-grant all on public.teachers to postgres;
+grant all on public.staff to authenticated;
+grant all on public.staff to service_role;
+grant all on public.staff to postgres;
 
 grant all on public.subjects to authenticated;
 grant all on public.subjects to service_role;
