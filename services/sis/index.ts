@@ -40,18 +40,6 @@ app.get('/students', async (req, res) => {
     res.json(data);
 });
 
-// Get Classes
-app.get('/classes', async (req, res) => {
-    const { school_id } = req.query;
-    const { data, error } = await supabase
-        .from('classes')
-        .select('*, sections(*)')
-        .eq('school_id', school_id);
-
-    if (error) return res.status(400).json({ error: error.message });
-    res.json(data);
-});
-
 // Get Student Stats
 app.get('/stats', async (req, res) => {
     const { school_id } = req.query;
@@ -147,7 +135,7 @@ app.get('/classes', async (req, res) => {
     const { school_id } = req.query;
     const { data, error } = await supabase
         .from('classes')
-        .select('*')
+        .select('*, sections(*)')
         .eq('school_id', school_id)
         .order('order_index');
 

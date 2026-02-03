@@ -2,7 +2,8 @@ FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY shared ./shared
+COPY services/sis ./services/sis
 RUN npm install
-COPY . .
 EXPOSE 8002
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--prefix", "services/sis"]

@@ -13,12 +13,12 @@ app.use(express.json());
 
 // Routes mapping
 const routes: Record<string, string> = {
-    '/api/auth': 'http://localhost:8001',
-    '/api/identity': 'http://localhost:8001',
-    '/api/sis': 'http://localhost:8002',
-    '/api/finance': 'http://localhost:8003',
-    '/api/engagement': 'http://localhost:8004',
-    '/api/academic': 'http://localhost:8005',
+    '/api/auth': process.env.IDENTITY_SERVICE_URL || 'http://localhost:8001',
+    '/api/identity': process.env.IDENTITY_SERVICE_URL || 'http://localhost:8001',
+    '/api/sis': process.env.SIS_SERVICE_URL || 'http://localhost:8002',
+    '/api/finance': process.env.FINANCE_SERVICE_URL || 'http://localhost:8003',
+    '/api/engagement': process.env.ENGAGEMENT_SERVICE_URL || 'http://localhost:8004',
+    '/api/academic': process.env.ACADEMIC_SERVICE_URL || 'http://localhost:8005',
 };
 
 // Proxy setup

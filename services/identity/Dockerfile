@@ -2,7 +2,8 @@ FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY shared ./shared
+COPY services/identity ./services/identity
 RUN npm install
-COPY . .
 EXPOSE 8001
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--prefix", "services/identity"]

@@ -12,5 +12,13 @@
         "dotenv": "^16.0.3",
         "shared": "*",
         "razorpay": "^2.9.2"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.0",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.0.4",
+        "@types/express": "^4.17.17",
+        "@types/cors": "^2.8.13",
+        "@types/node": "^20.1.0"
     }
 }

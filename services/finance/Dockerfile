@@ -2,7 +2,8 @@ FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY shared ./shared
+COPY services/finance ./services/finance
 RUN npm install
-COPY . .
 EXPOSE 8003
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--prefix", "services/finance"]
