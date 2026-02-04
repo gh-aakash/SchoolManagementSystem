@@ -18,38 +18,40 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            
-            # 1. Path Verification
-            if [ ! -d "~/SchoolManagementSystem" ]; then
-              echo "Error: Project directory not found at ~/SchoolManagementSystem"
-              exit 1
-            fi
-            
             cd ~/SchoolManagementSystem
             
-            # 2. Update Code (Critical: Reset any local glitches)
-            echo "Pulling latest code..."
+            # 1. Update Code
+            echo "Pulling latest stable code..."
             git fetch origin
             git reset --hard origin/v2-development
             
-            # 3. Re-launch Containers
-            echo "Rebuilding and launching services..."
+            # 2. Re-launch Containers
+            echo "Building production-grade containers via esbuild..."
             sudo docker compose down
-            sudo docker compose up -d --build
+            # Using --force-recreate to ensure the new esbuild-packed containers are used
+            sudo docker compose up -d --build --force-recreate
             
-            # 4. Verification Check
-            echo "Waiting for containers to stabilize..."
-            sleep 10
+            # 3. Verification Check (No Fake Green fix)
+            echo "Waiting for stabilization..."
+            sleep 20
             
-            RUNNING_CONTAINERS=$(sudo docker compose ps --format json | grep -c "running" || true)
-            echo "Detected $RUNNING_CONTAINERS running containers."
+            # Check for container health
+            UNHEALTHY=$(sudo docker compose ps --format json | grep -c "unhealthy" || true)
+            RUNNING=$(sudo docker compose ps --format json | grep -c "running" || true)
             
-            if [ "$RUNNING_CONTAINERS" -lt "7" ]; then
-              echo "ERROR: Not all containers started successfully (Expected 7, found $RUNNING_CONTAINERS)"
+            if [ "$UNHEALTHY" -gt "0" ]; then
+              echo "🔴 ERROR: Detected $UNHEALTHY unhealthy containers."
               sudo docker compose ps
               exit 1
             fi
             
-            # 5. Cleanup
+            if [ "$RUNNING" -lt "7" ]; then
+              echo "🔴 ERROR: Only $RUNNING/7 containers are running."
+              sudo docker compose ps
+              exit 1
+            fi
+            
+            echo "🟢 Deployment successful! All 7 services are running and healthy."
+            
+            # 4. Cleanup
             sudo docker image prune -f
-            echo "Deployment successful! 🧈🚀"
