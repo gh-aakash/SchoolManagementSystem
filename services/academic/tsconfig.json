@@ -5,7 +5,8 @@
     "rootDir": ".",
     "module": "CommonJS",
     "target": "ES6",
-    "noEmit": false
+    "noEmit": false,
+    "moduleResolution": "node"
   },
   "include": [
     "index.ts",
