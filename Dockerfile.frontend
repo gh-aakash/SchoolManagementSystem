@@ -2,7 +2,7 @@
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+# ENV NODE_ENV production (Removed as we are using dev server for flexibility)
 
 # Install all dependencies (needed for Tailwind/PostCSS during runtime/dev)
 COPY package*.json ./
