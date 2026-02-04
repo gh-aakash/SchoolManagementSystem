@@ -7,9 +7,10 @@ import { FeeCollectionForm } from './fee-collection-form'
 export default async function FeeCollectionPage({
     searchParams,
 }: {
-    const filters = await searchParams
+
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+    const filters = await searchParams
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
