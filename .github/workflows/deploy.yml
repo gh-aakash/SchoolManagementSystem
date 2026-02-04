@@ -17,15 +17,39 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
+            
+            # 1. Path Verification
+            if [ ! -d "~/SchoolManagementSystem" ]; then
+              echo "Error: Project directory not found at ~/SchoolManagementSystem"
+              exit 1
+            fi
+            
             cd ~/SchoolManagementSystem
             
-            # 1. Update Code
+            # 2. Update Code (Critical: Reset any local glitches)
+            echo "Pulling latest code..."
             git fetch origin
             git reset --hard origin/v2-development
             
-            # 2. Build and Restart Containers
+            # 3. Re-launch Containers
+            echo "Rebuilding and launching services..."
             sudo docker compose down
             sudo docker compose up -d --build
             
-            # 3. Cleanup unused images to save disk space
+            # 4. Verification Check
+            echo "Waiting for containers to stabilize..."
+            sleep 10
+            
+            RUNNING_CONTAINERS=$(sudo docker compose ps --format json | grep -c "running" || true)
+            echo "Detected $RUNNING_CONTAINERS running containers."
+            
+            if [ "$RUNNING_CONTAINERS" -lt "7" ]; then
+              echo "ERROR: Not all containers started successfully (Expected 7, found $RUNNING_CONTAINERS)"
+              sudo docker compose ps
+              exit 1
+            fi
+            
+            # 5. Cleanup
             sudo docker image prune -f
+            echo "Deployment successful! 🧈🚀"
