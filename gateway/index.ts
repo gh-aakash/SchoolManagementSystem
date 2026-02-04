@@ -36,6 +36,6 @@ app.get('/health', (req, res) => {
     res.json({ status: 'Gateway is running' });
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`API Gateway running on http://localhost:${PORT}`);
 });

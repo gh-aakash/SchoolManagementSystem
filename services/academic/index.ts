@@ -125,6 +125,6 @@ app.get('/health', (req, res) => {
     res.json({ status: 'Academic Service is running' });
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`Academic Service running on http://localhost:${PORT}`);
 });

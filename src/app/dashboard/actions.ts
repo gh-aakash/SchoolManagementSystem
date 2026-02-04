@@ -18,11 +18,20 @@ export async function getDashboardStats() {
     const schoolId = profile.school_id
 
     try {
+        const fetchStat = async (url: string) => {
+            try {
+                return await gatewayFetch(url);
+            } catch (err) {
+                console.error(`Fetch error for ${url}:`, err);
+                return {}; // Return empty object on failure
+            }
+        };
+
         const [sisStats, identityStats, financeStats] = await Promise.all([
-            gatewayFetch(`/api/sis/stats?school_id=${schoolId}`),
-            gatewayFetch(`/api/identity/stats?school_id=${schoolId}`),
-            gatewayFetch(`/api/finance/stats?school_id=${schoolId}`),
-        ])
+            fetchStat(`/api/sis/stats?school_id=${schoolId}`),
+            fetchStat(`/api/identity/stats?school_id=${schoolId}`),
+            fetchStat(`/api/finance/stats?school_id=${schoolId}`),
+        ]);
 
         return {
             studentCount: sisStats.studentCount || 0,
@@ -31,7 +40,7 @@ export async function getDashboardStats() {
             totalPending: financeStats.totalPending || 0
         }
     } catch (error: any) {
-        console.error('Dashboard Stats Error:', error)
+        console.error('Dashboard Stats Aggregate Error:', error)
         return { error: error.message }
     }
 }

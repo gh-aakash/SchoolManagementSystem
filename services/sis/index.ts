@@ -160,6 +160,6 @@ app.get('/health', (req, res) => {
     res.json({ status: 'SIS Service is running' });
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`SIS Service running on http://localhost:${PORT}`);
 });
