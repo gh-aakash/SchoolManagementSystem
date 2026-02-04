@@ -11,7 +11,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:services": "npm run build -w gateway -w services/identity -w services/sis -w services/finance -w services/engagement -w services/academic"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

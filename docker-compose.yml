@@ -12,7 +12,7 @@ services:
       - FINANCE_SERVICE_URL=http://finance:8003
       - ENGAGEMENT_SERVICE_URL=http://engagement:8004
       - ACADEMIC_SERVICE_URL=http://academic:8005
-    command: [ "npm", "run", "dev", "--prefix", "gateway" ]
+    command: [ "npm", "start", "--prefix", "gateway" ]
     networks:
       - schoolos-network
     depends_on:
@@ -27,9 +27,9 @@ services:
       academic:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 15s
+      timeout: 10s
       retries: 5
 
   identity:
@@ -40,13 +40,13 @@ services:
       - PORT=8001
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-    command: [ "npm", "run", "dev", "--prefix", "services/identity" ]
+    command: [ "npm", "start", "--prefix", "services/identity" ]
     networks:
       - schoolos-network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 15s
+      timeout: 10s
       retries: 5
 
   sis:
@@ -57,13 +57,13 @@ services:
       - PORT=8002
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-    command: [ "npm", "run", "dev", "--prefix", "services/sis" ]
+    command: [ "npm", "start", "--prefix", "services/sis" ]
     networks:
       - schoolos-network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8002/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/health" ]
+      interval: 15s
+      timeout: 10s
       retries: 5
 
   finance:
@@ -76,13 +76,13 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - NEXT_PUBLIC_RAZORPAY_KEY_ID=${NEXT_PUBLIC_RAZORPAY_KEY_ID}
       - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
-    command: [ "npm", "run", "dev", "--prefix", "services/finance" ]
+    command: [ "npm", "start", "--prefix", "services/finance" ]
     networks:
       - schoolos-network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8003/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
+      interval: 15s
+      timeout: 10s
       retries: 5
 
   engagement:
@@ -93,13 +93,13 @@ services:
       - PORT=8004
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-    command: [ "npm", "run", "dev", "--prefix", "services/engagement" ]
+    command: [ "npm", "start", "--prefix", "services/engagement" ]
     networks:
       - schoolos-network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8004/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD", "curl", "-f", "http://localhost:8004/health" ]
+      interval: 15s
+      timeout: 10s
       retries: 5
 
   academic:
@@ -110,13 +110,13 @@ services:
       - PORT=8005
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-    command: [ "npm", "run", "dev", "--prefix", "services/academic" ]
+    command: [ "npm", "start", "--prefix", "services/academic" ]
     networks:
       - schoolos-network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8005/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD", "curl", "-f", "http://localhost:8005/health" ]
+      interval: 15s
+      timeout: 10s
       retries: 5
 
   frontend:

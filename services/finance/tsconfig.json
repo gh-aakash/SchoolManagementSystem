@@ -1,3 +1,17 @@
 {
-    "extends": "../tsconfig.base.json"
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "module": "CommonJS",
+    "target": "ES6",
+    "noEmit": false
+  },
+  "include": [
+    "index.ts",
+    "../../shared/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

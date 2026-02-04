@@ -12,13 +12,20 @@ COPY services/finance/package*.json ./services/finance/
 COPY services/engagement/package*.json ./services/engagement/
 COPY services/academic/package*.json ./services/academic/
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Install dependencies (including devDependencies for tsc)
 RUN npm install --legacy-peer-deps
 
 # Copy the rest of the code
 COPY . .
 
+# Pre-compile the services to save RAM in production
+RUN npm run build:services
+
 # Default port (will be overridden)
 EXPOSE 8000 8001 8002 8003 8004 8005
 
-# The actual service to run will be determined by the docker-compose CMD
-CMD ["npm", "run", "dev"]
+# Use start script (node dist/index.js) by default
+CMD ["npm", "start"]
