@@ -2,7 +2,7 @@ services:
   gateway:
     build:
       context: .
-      dockerfile: gateway/Dockerfile
+      dockerfile: Dockerfile.system
     ports:
       - "8000:8000"
     environment:
@@ -12,71 +12,112 @@ services:
       - FINANCE_SERVICE_URL=http://finance:8003
       - ENGAGEMENT_SERVICE_URL=http://engagement:8004
       - ACADEMIC_SERVICE_URL=http://academic:8005
+    command: [ "npm", "run", "dev", "--prefix", "gateway" ]
     networks:
       - schoolos-network
     depends_on:
-      - identity
-      - sis
-      - finance
-      - engagement
-      - academic
+      identity:
+        condition: service_healthy
+      sis:
+        condition: service_healthy
+      finance:
+        condition: service_healthy
+      engagement:
+        condition: service_healthy
+      academic:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   identity:
     build:
       context: .
-      dockerfile: services/identity/Dockerfile
+      dockerfile: Dockerfile.system
     environment:
       - PORT=8001
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    command: [ "npm", "run", "dev", "--prefix", "services/identity" ]
     networks:
       - schoolos-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   sis:
     build:
       context: .
-      dockerfile: services/sis/Dockerfile
+      dockerfile: Dockerfile.system
     environment:
       - PORT=8002
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    command: [ "npm", "run", "dev", "--prefix", "services/sis" ]
     networks:
       - schoolos-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8002/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   finance:
     build:
       context: .
-      dockerfile: services/finance/Dockerfile
+      dockerfile: Dockerfile.system
     environment:
       - PORT=8003
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - NEXT_PUBLIC_RAZORPAY_KEY_ID=${NEXT_PUBLIC_RAZORPAY_KEY_ID}
       - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+    command: [ "npm", "run", "dev", "--prefix", "services/finance" ]
     networks:
       - schoolos-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8003/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   engagement:
     build:
       context: .
-      dockerfile: services/engagement/Dockerfile
+      dockerfile: Dockerfile.system
     environment:
       - PORT=8004
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    command: [ "npm", "run", "dev", "--prefix", "services/engagement" ]
     networks:
       - schoolos-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8004/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   academic:
     build:
       context: .
-      dockerfile: services/academic/Dockerfile
+      dockerfile: Dockerfile.system
     environment:
       - PORT=8005
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    command: [ "npm", "run", "dev", "--prefix", "services/academic" ]
     networks:
       - schoolos-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8005/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
@@ -93,7 +134,8 @@ services:
     networks:
       - schoolos-network
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
 
 networks:
   schoolos-network:

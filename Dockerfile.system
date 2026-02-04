@@ -1,0 +1,24 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for the entire monorepo
+COPY package*.json ./
+COPY shared/package*.json ./shared/
+COPY gateway/package*.json ./gateway/
+COPY services/identity/package*.json ./services/identity/
+COPY services/sis/package*.json ./services/sis/
+COPY services/finance/package*.json ./services/finance/
+COPY services/engagement/package*.json ./services/engagement/
+COPY services/academic/package*.json ./services/academic/
+
+RUN npm install --legacy-peer-deps
+
+# Copy the rest of the code
+COPY . .
+
+# Default port (will be overridden)
+EXPOSE 8000 8001 8002 8003 8004 8005
+
+# The actual service to run will be determined by the docker-compose CMD
+CMD ["npm", "run", "dev"]
