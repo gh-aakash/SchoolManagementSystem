@@ -4,6 +4,6 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY shared ./shared
 COPY services/academic ./services/academic
-RUN npm install
+RUN npm install --legacy-peer-deps
 EXPOSE 8005
 CMD ["npm", "run", "dev", "--prefix", "services/academic"]

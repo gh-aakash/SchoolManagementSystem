@@ -4,6 +4,6 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY shared ./shared
 COPY services/identity ./services/identity
-RUN npm install
+RUN npm install --legacy-peer-deps
 EXPOSE 8001
 CMD ["npm", "run", "dev", "--prefix", "services/identity"]

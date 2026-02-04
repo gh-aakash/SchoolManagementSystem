@@ -4,6 +4,6 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY shared ./shared
 COPY services/engagement ./services/engagement
-RUN npm install
+RUN npm install --legacy-peer-deps
 EXPOSE 8004
 CMD ["npm", "run", "dev", "--prefix", "services/engagement"]

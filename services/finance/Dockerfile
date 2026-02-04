@@ -4,6 +4,6 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY shared ./shared
 COPY services/finance ./services/finance
-RUN npm install
+RUN npm install --legacy-peer-deps
 EXPOSE 8003
 CMD ["npm", "run", "dev", "--prefix", "services/finance"]
