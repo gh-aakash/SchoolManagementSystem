@@ -11,7 +11,7 @@ import { Plus } from 'lucide-react'
 import { RouteForm } from './route-form'
 
 export default async function RoutesPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null

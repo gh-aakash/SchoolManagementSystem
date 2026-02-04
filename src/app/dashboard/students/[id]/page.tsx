@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { IDCard } from './id-card'
 import { StudentFeeTab } from './fee-tab'
 
-export default async function StudentProfilePage({ params }: { params: { id: string } }) {
-    const supabase = createClient()
+export default async function StudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null
@@ -27,7 +28,7 @@ export default async function StudentProfilePage({ params }: { params: { id: str
             academic_year:academic_years(name),
             school:schools(*)
         `)
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
 
     if (!student) return notFound()

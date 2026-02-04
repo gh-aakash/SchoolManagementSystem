@@ -4,7 +4,7 @@ import { FeeHeads } from './fee-heads'
 import { FeeStructureList } from './fee-assignment'
 
 export default async function FeeStructurePage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null

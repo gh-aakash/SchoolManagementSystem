@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AdmissionForm } from './admission-form'
 
 export default async function AddStudentPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null

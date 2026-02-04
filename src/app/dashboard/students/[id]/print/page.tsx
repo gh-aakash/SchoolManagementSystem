@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 
-export default async function PrintAdmissionFormPage({ params }: { params: { id: string } }) {
-    const supabase = createClient()
-    const { id } = params
+export default async function PrintAdmissionFormPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const supabase = await createClient()
 
     const { data: student } = await supabase
         .from('students')

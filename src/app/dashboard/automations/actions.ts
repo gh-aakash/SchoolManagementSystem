@@ -8,7 +8,7 @@ import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { sendEmail } from '@/lib/email'
 
 export async function createAutomation(rule: AutomationRule) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -42,7 +42,7 @@ export async function createAutomation(rule: AutomationRule) {
 }
 
 export async function updateAutomation(id: string, rule: AutomationRule) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -66,7 +66,7 @@ export async function updateAutomation(id: string, rule: AutomationRule) {
 }
 
 export async function deleteAutomation(id: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -82,7 +82,7 @@ export async function deleteAutomation(id: string) {
 }
 
 export async function toggleAutomationStatus(id: string, isActive: boolean) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -98,7 +98,7 @@ export async function toggleAutomationStatus(id: string, isActive: boolean) {
 }
 
 export async function batchUpdateAutomations(ids: string[], action: 'activate' | 'deactivate' | 'delete') {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -128,7 +128,7 @@ export async function batchUpdateAutomations(ids: string[], action: 'activate' |
 // --- Evaluation Logic ---
 
 export async function checkAndRunAutomations(triggerType: string, context: any) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // 1. Fetch active rules for this trigger
     // Note: In a real scenario, we'd filter by school_id from context or fetch all relevant rules
@@ -203,7 +203,7 @@ function getNestedValue(obj: any, path: string) {
 // ...
 
 export async function testAutomation(id: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

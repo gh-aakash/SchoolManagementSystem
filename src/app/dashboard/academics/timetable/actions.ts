@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { gatewayFetch } from '@/lib/gateway'
 
 export async function createPeriod(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -41,7 +41,7 @@ export async function getTimetable(sectionId: string) {
 }
 
 export async function saveTimetable(sectionId: string, entries: any[]) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -69,7 +69,7 @@ export async function saveTimetable(sectionId: string, entries: any[]) {
 }
 
 export async function getMasterTimetable(day: number) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

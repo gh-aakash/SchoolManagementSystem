@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { FeeReminderForm } from './fee-reminder-form'
 
 export default async function FeeRemindersPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null

@@ -9,7 +9,7 @@ import { FadeIn, SlideUp, StaggerContainer, StaggerItem } from '@/components/ui/
 import { format } from 'date-fns'
 
 export default async function DashboardPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-8">
-                                {transactions?.map((t) => (
+                                {transactions?.map((t: any) => (
                                     <div key={t.id} className="flex items-center">
                                         <div className="space-y-1">
                                             <p className="text-sm font-medium leading-none">

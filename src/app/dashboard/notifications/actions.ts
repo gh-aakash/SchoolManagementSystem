@@ -7,7 +7,7 @@ import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { sendEmail } from '@/lib/email'
 
 export async function createNotification(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {

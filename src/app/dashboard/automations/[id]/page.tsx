@@ -5,9 +5,9 @@ import { Separator } from '@/components/ui/separator'
 import { notFound } from 'next/navigation'
 import { AutomationRule } from '../types'
 
-export default async function EditAutomationPage({ params }: { params: { id: string } }) {
-    const supabase = createClient()
-    const { id } = params
+export default async function EditAutomationPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const supabase = await createClient()
 
     const { data: automation } = await supabase
         .from('automations')

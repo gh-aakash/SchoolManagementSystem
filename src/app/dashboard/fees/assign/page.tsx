@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { BulkFeeAssignForm } from './bulk-assign-form'
 
 export default async function BulkFeeAssignPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null

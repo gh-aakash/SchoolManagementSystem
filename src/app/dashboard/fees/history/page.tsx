@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { FeeHistoryTable } from './fee-history-table'
 
 export default async function FeeHistoryPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { AutomationList } from './automation-list'
 
 export default async function AutomationsPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 

@@ -20,9 +20,10 @@ import { StudentTable } from './student-table'
 export default async function StudentsPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined }
+    const filters = await searchParams
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null
@@ -41,10 +42,10 @@ export default async function StudentsPage({
     const sections = await gatewayFetch(`/api/sis/sections?school_id=${schoolId}`) // Need to add sections endpoint to SIS
 
     // Build Query Params with Filters
-    const search = (searchParams.search as string) || ''
-    const classId = (searchParams.class_id as string) || 'all'
-    const sectionId = (searchParams.section_id as string) || 'all'
-    const gender = (searchParams.gender as string) || 'all'
+    const search = (filters.search as string) || ''
+    const classId = (filters.class_id as string) || 'all'
+    const sectionId = (filters.section_id as string) || 'all'
+    const gender = (filters.gender as string) || 'all'
 
     const queryParams = new URLSearchParams({
         school_id: schoolId,

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
 
 export async function getAttendanceStats() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -100,7 +100,7 @@ export async function getAttendanceStats() {
 }
 
 export async function exportAttendanceLogs(startDate: string, endDate: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

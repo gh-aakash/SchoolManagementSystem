@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { gatewayFetch } from '@/lib/gateway'
 
 export async function createSubject(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -33,7 +33,7 @@ export async function createSubject(formData: FormData) {
 }
 
 export async function createExam(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -66,7 +66,7 @@ export async function createExam(formData: FormData) {
 }
 
 export async function updateMarks(data: { student_id: string, exam_id: string, subject_id: string, marks: number }[]) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function updateSchoolProfile(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const name = formData.get('name') as string
     const address = formData.get('address') as string
@@ -47,7 +47,7 @@ export async function updateSchoolProfile(formData: FormData) {
 }
 
 export async function syncClasses() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { AdmissionForm } from '../../add/admission-form'
 
-export default async function EditStudentPage({ params }: { params: { id: string } }) {
-    const supabase = createClient()
-    const { id } = params
+export default async function EditStudentPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const supabase = await createClient()
 
     // Fetch student data
     const { data: student } = await supabase

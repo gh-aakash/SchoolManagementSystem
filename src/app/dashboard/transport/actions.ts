@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function createRoute(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const route_name = formData.get('route_name') as string
     const vehicle_number = formData.get('vehicle_number') as string
     const driver_name = formData.get('driver_name') as string
@@ -39,7 +39,7 @@ export async function createRoute(formData: FormData) {
 }
 
 export async function createStop(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const route_id = formData.get('route_id') as string
     const stop_name = formData.get('stop_name') as string
     const pickup_time = formData.get('pickup_time') as string

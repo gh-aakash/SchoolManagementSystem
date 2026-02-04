@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CreateNotificationForm } from './create-notification-form'
 
 export default async function CreateNotificationPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null

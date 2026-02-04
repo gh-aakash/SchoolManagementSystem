@@ -4,7 +4,7 @@ import { gatewayFetch } from '@/lib/gateway'
 import { checkAndRunAutomations } from '../automations/actions'
 
 export async function getStudentsForAttendance(classId: string, sectionId: string, date: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -25,7 +25,7 @@ export async function getStudentsForAttendance(classId: string, sectionId: strin
 }
 
 export async function markAttendance(records: { student_id: string; status: string; date: string }[], classId: string, sectionId: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -84,7 +84,7 @@ export async function markAttendance(records: { student_id: string; status: stri
 }
 
 export async function getMasterAttendance(date: string, classId: string, sectionId: string, status: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

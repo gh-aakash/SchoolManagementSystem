@@ -7,9 +7,10 @@ import { FeeCollectionForm } from './fee-collection-form'
 export default async function FeeCollectionPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined }
+    const filters = await searchParams
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null
@@ -44,9 +45,9 @@ export default async function FeeCollectionPage({
         .order('first_name')
 
     // Apply Filters
-    const search = searchParams.search as string
-    const classId = searchParams.class_id as string
-    const sectionId = searchParams.section_id as string
+    const search = filters.search as string
+    const classId = filters.class_id as string
+    const sectionId = filters.section_id as string
 
     if (search) {
         query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,admission_no.ilike.%${search}%`)

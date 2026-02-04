@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { redirect } from 'next/navigation'
 
-export default async function MarksEntryPage({ searchParams }: { searchParams: { exam?: string, class?: string, section?: string, subject?: string } }) {
-    const supabase = createClient()
+export default async function MarksEntryPage({ searchParams }: { searchParams: Promise<{ exam?: string, class?: string, section?: string, subject?: string }> }) {
+    const filters = await searchParams
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null
@@ -27,8 +28,8 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
     const { data: subjects } = await supabase.from('subjects').select('*').eq('school_id', profile.school_id).order('name')
 
     let sections: any[] = []
-    if (searchParams.class) {
-        const { data } = await supabase.from('sections').select('*').eq('class_id', searchParams.class)
+    if (filters.class) {
+        const { data } = await supabase.from('sections').select('*').eq('class_id', filters.class)
         sections = data || []
     }
 
@@ -36,13 +37,13 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
     let students: any[] = []
     let existingMarks: any[] = []
 
-    if (searchParams.exam && searchParams.class && searchParams.section && searchParams.subject) {
+    if (filters.exam && filters.class && filters.section && filters.subject) {
         const { data: s } = await supabase
             .from('students')
             .select('id, first_name, last_name, admission_no')
             .eq('school_id', profile.school_id)
-            .eq('current_class_id', searchParams.class)
-            .eq('current_section_id', searchParams.section)
+            .eq('current_class_id', filters.class)
+            .eq('current_section_id', filters.section)
             .eq('is_active', true)
             .order('first_name')
         students = s || []
@@ -50,8 +51,8 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
         const { data: m } = await supabase
             .from('exam_results')
             .select('student_id, marks_obtained')
-            .eq('exam_id', searchParams.exam)
-            .eq('subject_id', searchParams.subject)
+            .eq('exam_id', filters.exam)
+            .eq('subject_id', filters.subject)
         existingMarks = m || []
     }
 
@@ -70,7 +71,7 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
                     <form className="grid grid-cols-1 gap-4 md:grid-cols-4">
                         <div className="space-y-2">
                             <Label>Exam</Label>
-                            <Select name="exam" defaultValue={searchParams.exam}>
+                            <Select name="exam" defaultValue={filters.exam}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select Exam" />
                                 </SelectTrigger>
@@ -81,7 +82,7 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
                         </div>
                         <div className="space-y-2">
                             <Label>Class</Label>
-                            <Select name="class" defaultValue={searchParams.class}>
+                            <Select name="class" defaultValue={filters.class}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select Class" />
                                 </SelectTrigger>
@@ -92,7 +93,7 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
                         </div>
                         <div className="space-y-2">
                             <Label>Section</Label>
-                            <Select name="section" defaultValue={searchParams.section} disabled={!searchParams.class}>
+                            <Select name="section" defaultValue={filters.section} disabled={!filters.class}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select Section" />
                                 </SelectTrigger>
@@ -103,7 +104,7 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
                         </div>
                         <div className="space-y-2">
                             <Label>Subject</Label>
-                            <Select name="subject" defaultValue={searchParams.subject}>
+                            <Select name="subject" defaultValue={filters.subject}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select Subject" />
                                 </SelectTrigger>
@@ -119,11 +120,11 @@ export default async function MarksEntryPage({ searchParams }: { searchParams: {
                 </CardContent>
             </Card>
 
-            {searchParams.exam && searchParams.class && searchParams.section && searchParams.subject && (
+            {filters.exam && filters.class && filters.section && filters.subject && (
                 <MarksEntryGrid
                     students={students}
-                    examId={searchParams.exam}
-                    subjectId={searchParams.subject}
+                    examId={filters.exam}
+                    subjectId={filters.subject}
                     existingMarks={existingMarks}
                 />
             )}

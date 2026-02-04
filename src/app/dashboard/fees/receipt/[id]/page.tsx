@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 
-export default async function FeeReceiptPage({ params }: { params: { id: string } }) {
-    const supabase = createClient()
-    const { id } = params
+export default async function FeeReceiptPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const supabase = await createClient()
 
     // Fetch Transaction Details with related data
     const { data: transaction } = await supabase

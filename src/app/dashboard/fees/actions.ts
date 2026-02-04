@@ -6,7 +6,7 @@ import { gatewayFetch } from '@/lib/gateway'
 import { checkAndRunAutomations } from '../automations/actions'
 
 export async function createFeeHead(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -41,7 +41,7 @@ export async function createFeeHead(formData: FormData) {
 }
 
 export async function createFeeStructure(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -105,7 +105,7 @@ export async function createFeeStructure(formData: FormData) {
 }
 
 export async function collectFee(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -174,7 +174,7 @@ export async function collectFee(formData: FormData) {
 }
 
 export async function getStudentPendingFees(studentId: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -213,7 +213,7 @@ export async function getStudentPendingFees(studentId: string) {
 }
 
 export async function assignFeeToClass(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
@@ -326,7 +326,7 @@ export async function assignFeeToClass(formData: FormData) {
 }
 
 export async function deleteFeeStructure(id: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -343,7 +343,7 @@ export async function deleteFeeStructure(id: string) {
 }
 
 export async function syncFeeStructure(structureId: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -369,7 +369,7 @@ export async function syncFeeStructure(structureId: string) {
 }
 
 export async function getFeeRecords(filters: any) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -395,7 +395,7 @@ export async function getFeeRecords(filters: any) {
 }
 
 export async function getFeeTransactions(filters: any) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

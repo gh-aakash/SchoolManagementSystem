@@ -9,15 +9,16 @@ import { Mail, Phone, MapPin, Calendar, Briefcase, User, Clock } from 'lucide-re
 import { format } from 'date-fns'
 import { EditStaffDialog } from '../edit-staff-dialog'
 
-export default async function StaffProfilePage({ params }: { params: { id: string } }) {
-    const supabase = createClient()
+export default async function StaffProfilePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
     const { data: staff } = await supabase
         .from('staff')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
 
     if (!staff) notFound()
@@ -85,7 +86,7 @@ export default async function StaffProfilePage({ params }: { params: { id: strin
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <StaffTimetable staffId={params.id} schoolId={staff.school_id} />
+                            <StaffTimetable staffId={id} schoolId={staff.school_id} />
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -106,7 +107,7 @@ export default async function StaffProfilePage({ params }: { params: { id: strin
 }
 
 async function StaffTimetable({ staffId, schoolId }: { staffId: string, schoolId: string }) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Fetch Periods
     const { data: periods } = await supabase

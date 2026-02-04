@@ -6,7 +6,7 @@ import { AcademicYears } from './academic-years'
 import { Separator } from '@/components/ui/separator'
 
 export default async function SettingsPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
     console.log('Settings Page - User:', user?.id)

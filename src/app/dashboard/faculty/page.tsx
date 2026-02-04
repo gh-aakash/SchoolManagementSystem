@@ -8,7 +8,7 @@ import { StaffList } from './teachers-list'
 import { AddStaffDialog } from './add-teacher-dialog'
 
 export default async function FacultyPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 

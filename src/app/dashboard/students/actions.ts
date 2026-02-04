@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { gatewayFetch } from '@/lib/gateway'
 
 export async function createStudent(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -87,7 +87,7 @@ export async function createStudent(formData: FormData) {
 }
 
 export async function autoAllocateRollNumbers(classId: string, sectionId: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 

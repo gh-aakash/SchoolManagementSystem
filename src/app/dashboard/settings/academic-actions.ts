@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function createAcademicYear(formData: FormData) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const name = formData.get('name') as string
     const start_date = formData.get('start_date') as string
@@ -39,7 +39,7 @@ export async function createAcademicYear(formData: FormData) {
 }
 
 export async function setAcademicYearActive(id: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }

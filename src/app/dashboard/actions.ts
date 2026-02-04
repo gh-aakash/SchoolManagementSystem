@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { gatewayFetch } from '@/lib/gateway'
 
 export async function getDashboardStats() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
@@ -37,7 +37,7 @@ export async function getDashboardStats() {
 }
 
 export async function getRecentTransactions() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
