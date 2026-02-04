@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 export function LoginForm() {
     const [isLoading, setIsLoading] = useState(false)
@@ -65,7 +66,14 @@ export function LoginForm() {
                         </CardContent>
                         <CardFooter>
                             <Button className="w-full" type="submit" disabled={isLoading}>
-                                {isLoading ? 'Logging in...' : 'Login'}
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Logging in...
+                                    </>
+                                ) : (
+                                    'Login'
+                                )}
                             </Button>
                         </CardFooter>
                     </form>
@@ -101,7 +109,14 @@ export function LoginForm() {
                         </CardContent>
                         <CardFooter>
                             <Button className="w-full" type="submit" disabled={isLoading}>
-                                {isLoading ? 'Creating account...' : 'Create Account'}
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating account...
+                                    </>
+                                ) : (
+                                    'Create Account'
+                                )}
                             </Button>
                         </CardFooter>
                     </form>

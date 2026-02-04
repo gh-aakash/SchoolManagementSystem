@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 interface AdmissionFormProps {
     classes: any[]
@@ -323,7 +324,8 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
                 <CardFooter className="flex justify-end gap-4">
                     <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
                     <Button type="submit" disabled={isLoading || uploading}>
-                        {uploading ? 'Uploading...' : (isLoading ? (isEditMode ? 'Updating...' : 'Admit Student') : (isEditMode ? 'Update Student' : 'Admit Student'))}
+                        {(isLoading || uploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {uploading ? 'Uploading...' : (isEditMode ? 'Update Student' : 'Admit Student')}
                     </Button>
                 </CardFooter>
             </Card>
