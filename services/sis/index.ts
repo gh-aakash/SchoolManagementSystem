@@ -83,11 +83,14 @@ app.post('/students', async (req, res) => {
     } = req.body;
 
     try {
+        const start = Date.now();
         let finalAdmissionNo = admission_no;
         if (!finalAdmissionNo) {
             finalAdmissionNo = await getNextAdmissionNo(school_id);
         }
+        console.log(`[SIS] Admission No generated in ${Date.now() - start}ms`);
 
+        const insertStart = Date.now();
         const { data, error } = await supabase
             .from('students')
             .insert({
@@ -104,6 +107,8 @@ app.post('/students', async (req, res) => {
             })
             .select()
             .single();
+
+        console.log(`[SIS] DB Insert completed in ${Date.now() - insertStart}ms. Total: ${Date.now() - start}ms`);
 
         if (error) throw error;
         res.json(data);

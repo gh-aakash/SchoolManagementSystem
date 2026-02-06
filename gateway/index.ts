@@ -26,6 +26,8 @@ Object.entries(routes).forEach(([path, target]) => {
     app.use(path, createProxyMiddleware({
         target,
         changeOrigin: true,
+        timeout: 60000,
+        proxyTimeout: 60000,
         pathRewrite: {
             [`^${path}`]: '', // Remove the path prefix when forwarding
         },

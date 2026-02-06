@@ -112,12 +112,15 @@ app.delete('/staff/:id', async (req, res) => {
 // Get Active Academic Year
 app.get('/academic-years/active', async (req, res) => {
     const { school_id } = req.query;
+    const start = Date.now();
     const { data, error } = await supabase
         .from('academic_years')
         .select('*')
         .eq('school_id', school_id)
         .eq('is_active', true)
         .single();
+
+    console.log(`[Identity] Active Year fetch took ${Date.now() - start}ms`);
 
     if (error) return res.status(400).json({ error: error.message });
     res.json(data);

@@ -3,7 +3,7 @@ export async function gatewayFetch(path: string, options: RequestInit = {}) {
     const url = `${GATEWAY_URL}${path}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    const timeout = setTimeout(() => controller.abort(), 60000); // Increased to 60s for reliability
 
     try {
         const response = await fetch(url, {

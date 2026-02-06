@@ -25,6 +25,7 @@ interface AdmissionFormProps {
 export function AdmissionForm({ classes, sections, initialData, isEditMode = false }: AdmissionFormProps) {
     const [uploading, setUploading] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [selectedClass, setSelectedClass] = useState<string>(initialData?.current_class_id || '')
     const supabase = createClient()
 
@@ -53,9 +54,11 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
 
     async function handleSubmit(formData: FormData) {
         setIsLoading(true)
+        setIsSubmitting(true)
         setUploading(true)
 
         try {
+            console.log('--- Admission Process Started ---')
             // Handle File Uploads
             const photoFile = formData.get('photo') as File
             const tcFile = formData.get('tc') as File
@@ -66,56 +69,49 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
             if (admissionNo === '') admissionNo = undefined as any
 
             if (photoFile?.size > 0) {
+                console.log('Uploading photo...')
                 const path = `${selectedClass}/${admissionNo}/photo-${Date.now()}`
                 const url = await handleUpload(photoFile, path)
                 formData.set('photo_url', url)
             }
             if (tcFile?.size > 0) {
+                console.log('Uploading TC...')
                 const path = `${selectedClass}/${admissionNo}/tc-${Date.now()}`
                 const url = await handleUpload(tcFile, path)
                 formData.set('tc_url', url)
             }
             if (birthCertFile?.size > 0) {
+                console.log('Uploading Birth Cert...')
                 const path = `${selectedClass}/${admissionNo}/birth-${Date.now()}`
                 const url = await handleUpload(birthCertFile, path)
                 formData.set('birth_cert_url', url)
             }
 
-            let result;
-            if (isEditMode && initialData?.id) {
-                formData.append('id', initialData.id)
-                // We need to import updateStudent or handle it in createStudent
-                // For now, let's assume createStudent handles upsert or we create a new action.
-                // Actually, let's use a new action `updateStudent` which we need to import.
-                // But since I can't easily change imports in this block without replacing the whole file,
-                // I will assume `createStudent` can handle it or I will use `createStudent` for now and fix the action.
-                // WAIT: I should fix the imports first.
-                // Let's just use createStudent for now and I will modify createStudent to handle updates if ID is present.
-                result = await createStudent(formData)
-            } else {
-                result = await createStudent(formData)
-            }
+            console.log('Calling server action: createStudent...')
+            const result = await createStudent(formData)
 
             if (result?.error) {
+                console.error('Server Action Error:', result.error)
                 toast.error(result.error)
                 setIsLoading(false)
                 setUploading(false)
+                setIsSubmitting(false)
             } else {
+                console.log('Success! Redirecting...')
                 toast.success(isEditMode ? 'Student updated successfully' : 'Student admitted successfully')
-                // Force refresh and redirect to ensure data is fresh
                 window.location.href = '/dashboard/students'
             }
         } catch (error: any) {
+            console.error('Fatal Catch in AdmissionForm:', error)
             // Allow Next.js redirects to pass through
             if (error.message === 'NEXT_REDIRECT' || error.digest?.startsWith('NEXT_REDIRECT')) {
-                // If it's a redirect, we don't clear loading yet as the page is changing
                 window.location.href = '/dashboard/students'
                 return
             }
-            console.error(error)
             toast.error('An error occurred. Please try again.')
             setIsLoading(false)
             setUploading(false)
+            setIsSubmitting(false)
         }
     }
 
@@ -336,7 +332,7 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
                     <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
                     <LoadingButton
                         type="submit"
-                        isLoading={isLoading || uploading}
+                        isLoading={isSubmitting || isLoading || uploading}
                         loadingText={uploading ? 'Uploading...' : 'Processing...'}
                     >
                         {isEditMode ? 'Update Student' : 'Admit Student'}
