@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile.system
     ports:
       - "8000:8000"
+    restart: always
     environment:
       - PORT=8000
       - IDENTITY_SERVICE_URL=http://identity:8001
@@ -36,6 +37,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.system
+    restart: always
     environment:
       - PORT=8001
       - SUPABASE_URL=${SUPABASE_URL}
@@ -53,6 +55,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.system
+    restart: always
     environment:
       - PORT=8002
       - SUPABASE_URL=${SUPABASE_URL}
@@ -70,6 +73,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.system
+    restart: always
     environment:
       - PORT=8003
       - SUPABASE_URL=${SUPABASE_URL}
@@ -89,6 +93,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.system
+    restart: always
     environment:
       - PORT=8004
       - SUPABASE_URL=${SUPABASE_URL}
@@ -106,6 +111,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.system
+    restart: always
     environment:
       - PORT=8005
       - SUPABASE_URL=${SUPABASE_URL}
@@ -125,6 +131,7 @@ services:
       dockerfile: Dockerfile.frontend
     ports:
       - "3000:3000"
+    restart: always
     environment:
       - NODE_ENV=development
       - GATEWAY_URL=http://gateway:8000
