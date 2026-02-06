@@ -60,7 +60,10 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
             const photoFile = formData.get('photo') as File
             const tcFile = formData.get('tc') as File
             const birthCertFile = formData.get('birth_cert') as File
-            const admissionNo = formData.get('admission_no') || initialData?.admission_no || 'temp-' + Date.now()
+
+            // Fix: Don't send "temp-" number. Let backend handle it if empty.
+            let admissionNo = formData.get('admission_no') as string
+            if (admissionNo === '') admissionNo = undefined as any
 
             if (photoFile?.size > 0) {
                 const path = `${selectedClass}/${admissionNo}/photo-${Date.now()}`
@@ -95,28 +98,35 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
 
             if (result?.error) {
                 toast.error(result.error)
+                setIsLoading(false)
+                setUploading(false)
             } else {
                 toast.success(isEditMode ? 'Student updated successfully' : 'Student admitted successfully')
-                if (isEditMode) {
-                    // Redirect or refresh?
-                    // router.push(`/dashboard/students/${initialData.id}`)
-                }
+                // Force refresh and redirect to ensure data is fresh
+                window.location.href = '/dashboard/students'
             }
         } catch (error: any) {
             // Allow Next.js redirects to pass through
             if (error.message === 'NEXT_REDIRECT' || error.digest?.startsWith('NEXT_REDIRECT')) {
-                throw error
+                // If it's a redirect, we don't clear loading yet as the page is changing
+                window.location.href = '/dashboard/students'
+                return
             }
             console.error(error)
             toast.error('An error occurred. Please try again.')
-        } finally {
             setIsLoading(false)
             setUploading(false)
         }
     }
 
+    const onFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        const formData = new FormData(e.currentTarget)
+        await handleSubmit(formData)
+    }
+
     return (
-        <form action={handleSubmit}>
+        <form onSubmit={onFormSubmit}>
             <Card>
                 <CardHeader>
                     <CardTitle>{isEditMode ? 'Edit Student Profile' : 'New Student Admission'}</CardTitle>

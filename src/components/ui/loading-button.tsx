@@ -27,33 +27,22 @@ const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
             >
                 <Button
                     ref={ref}
-                    className={cn("relative overflow-hidden transition-all duration-200", className)}
+                    className={cn(
+                        "relative overflow-hidden transition-all duration-300 min-w-[140px]",
+                        isLoading && "animate-pulse opacity-90",
+                        className
+                    )}
                     disabled={isLoading || disabled}
                     {...props}
                 >
-                    <AnimatePresence mode="wait">
-                        {isLoading ? (
-                            <motion.div
-                                key="loading"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="flex items-center justify-center gap-2"
-                            >
-                                <IOSSpinner />
-                                {loadingText && <span>{loadingText}</span>}
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="content"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                            >
-                                {children}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {isLoading ? (
+                        <div className="flex items-center justify-center gap-2">
+                            <IOSSpinner />
+                            {loadingText && <span>{loadingText}</span>}
+                        </div>
+                    ) : (
+                        <div>{children}</div>
+                    )}
                 </Button>
             </motion.div>
         )

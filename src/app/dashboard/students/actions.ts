@@ -60,19 +60,24 @@ export async function createStudent(formData: FormData) {
         } else {
             // Create
             // 1. Get active academic year from Identity service (Essential for linking)
+            console.log('Fetching active year for school:', schoolId)
             const activeYear = await gatewayFetch(`/api/identity/academic-years/active?school_id=${schoolId}`)
+            console.log('Active Year found:', activeYear?.id)
 
             // 2. SIS service will now handle admission_no internally if not provided
-            await gatewayFetch('/api/sis/students', {
+            const sisResponse = await gatewayFetch('/api/sis/students', {
                 method: 'POST',
                 body: JSON.stringify({
                     ...studentData,
                     academic_year_id: activeYear.id
                 })
             })
+            console.log('SIS Create Response:', sisResponse?.id)
         }
 
         revalidatePath('/dashboard/students')
+        revalidatePath('/dashboard')
+
         if (studentId) {
             revalidatePath(`/dashboard/students/${studentId}`)
             redirect(`/dashboard/students/${studentId}`)
