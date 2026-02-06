@@ -85,6 +85,9 @@ export async function createStudent(formData: FormData) {
             redirect('/dashboard/students')
         }
     } catch (error: any) {
+        if (error.message === 'NEXT_REDIRECT' || error.digest?.startsWith('NEXT_REDIRECT')) {
+            throw error
+        }
         console.error('Create/Update Student Error:', error)
         return { error: error.message }
     }

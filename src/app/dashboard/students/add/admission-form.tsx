@@ -102,12 +102,12 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
                 window.location.href = '/dashboard/students'
             }
         } catch (error: any) {
-            console.error('Fatal Catch in AdmissionForm:', error)
             // Allow Next.js redirects to pass through
             if (error.message === 'NEXT_REDIRECT' || error.digest?.startsWith('NEXT_REDIRECT')) {
                 window.location.href = '/dashboard/students'
                 return
             }
+            console.error('Fatal Catch in AdmissionForm:', error)
             toast.error('An error occurred. Please try again.')
             setIsLoading(false)
             setUploading(false)
