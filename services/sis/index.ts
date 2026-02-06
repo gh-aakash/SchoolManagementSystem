@@ -53,27 +53,64 @@ app.get('/stats', async (req, res) => {
     res.json({ studentCount: count || 0 });
 });
 
-// Create Student
-app.post('/students', async (req, res) => {
-    const { school_id, first_name, last_name, admission_no, roll_no, gender, dob, current_class_id, current_section_id } = req.body;
-    const { data, error } = await supabase
+// Helper to get next admission no
+async function getNextAdmissionNo(school_id: string) {
+    const { data: lastStudent } = await supabase
         .from('students')
-        .insert({
-            school_id,
-            first_name,
-            last_name,
-            admission_no,
-            roll_no,
-            gender,
-            dob,
-            current_class_id,
-            current_section_id
-        })
-        .select()
+        .select('admission_no')
+        .eq('school_id', school_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
 
-    if (error) return res.status(400).json({ error: error.message });
-    res.json(data);
+    let nextAdmissionNo = 'ADM-00001';
+    if (lastStudent?.admission_no) {
+        const match = lastStudent.admission_no.match(/ADM-(\d+)/);
+        if (match) {
+            const nextNum = parseInt(match[1]) + 1;
+            nextAdmissionNo = `ADM-${nextNum.toString().padStart(5, '0')}`;
+        }
+    }
+    return nextAdmissionNo;
+}
+
+// Create Student
+app.post('/students', async (req, res) => {
+    const {
+        school_id, first_name, last_name, admission_no,
+        roll_no, gender, dob, current_class_id,
+        current_section_id, academic_year_id
+    } = req.body;
+
+    try {
+        let finalAdmissionNo = admission_no;
+        if (!finalAdmissionNo) {
+            finalAdmissionNo = await getNextAdmissionNo(school_id);
+        }
+
+        const { data, error } = await supabase
+            .from('students')
+            .insert({
+                school_id,
+                first_name,
+                last_name,
+                admission_no: finalAdmissionNo,
+                roll_no,
+                gender,
+                dob,
+                current_class_id,
+                current_section_id,
+                academic_year_id
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error: any) {
+        console.error('SIS Create Student Error:', error);
+        res.status(400).json({ error: error.message });
+    }
 });
 
 // Update Student

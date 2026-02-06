@@ -59,17 +59,14 @@ export async function createStudent(formData: FormData) {
             })
         } else {
             // Create
-            // 1. Get next admission no from SIS service
-            const { nextAdmissionNo } = await gatewayFetch(`/api/sis/students/next-admission-no?school_id=${schoolId}`)
-
-            // 2. Get active academic year from Identity service
+            // 1. Get active academic year from Identity service (Essential for linking)
             const activeYear = await gatewayFetch(`/api/identity/academic-years/active?school_id=${schoolId}`)
 
+            // 2. SIS service will now handle admission_no internally if not provided
             await gatewayFetch('/api/sis/students', {
                 method: 'POST',
                 body: JSON.stringify({
                     ...studentData,
-                    admission_no: nextAdmissionNo,
                     academic_year_id: activeYear.id
                 })
             })

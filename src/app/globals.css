@@ -76,3 +76,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .ios-spinner {
+    @apply relative translate-y-[2px] inline-block w-5 h-5;
+  }
+  .ios-spinner-leaf {
+    @apply absolute w-[10%] h-[28%] left-[45%] top-[10%] bg-current rounded-full origin-[center_145%] opacity-0;
+    animation: ios-spinner-fade 1s linear infinite;
+  }
+}
+
+@keyframes ios-spinner-fade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.ios-spinner-leaf:nth-child(1) { transform: rotate(0deg); animation-delay: 0s; }
+.ios-spinner-leaf:nth-child(2) { transform: rotate(30deg); animation-delay: -0.9167s; }
+.ios-spinner-leaf:nth-child(3) { transform: rotate(60deg); animation-delay: -0.8333s; }
+.ios-spinner-leaf:nth-child(4) { transform: rotate(90deg); animation-delay: -0.75s; }
+.ios-spinner-leaf:nth-child(5) { transform: rotate(120deg); animation-delay: -0.6667s; }
+.ios-spinner-leaf:nth-child(6) { transform: rotate(150deg); animation-delay: -0.5833s; }
+.ios-spinner-leaf:nth-child(7) { transform: rotate(180deg); animation-delay: -0.5s; }
+.ios-spinner-leaf:nth-child(8) { transform: rotate(210deg); animation-delay: -0.4167s; }
+.ios-spinner-leaf:nth-child(9) { transform: rotate(240deg); animation-delay: -0.3333s; }
+.ios-spinner-leaf:nth-child(10) { transform: rotate(270deg); animation-delay: -0.25s; }
+.ios-spinner-leaf:nth-child(11) { transform: rotate(300deg); animation-delay: -0.1667s; }
+.ios-spinner-leaf:nth-child(12) { transform: rotate(330deg); animation-delay: -0.0833s; }

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { createStudent } from '../actions'
 import { Button } from '@/components/ui/button'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -323,10 +324,13 @@ export function AdmissionForm({ classes, sections, initialData, isEditMode = fal
                 </CardContent>
                 <CardFooter className="flex justify-end gap-4">
                     <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
-                    <Button type="submit" disabled={isLoading || uploading}>
-                        {(isLoading || uploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {uploading ? 'Uploading...' : (isEditMode ? 'Update Student' : 'Admit Student')}
-                    </Button>
+                    <LoadingButton
+                        type="submit"
+                        isLoading={isLoading || uploading}
+                        loadingText={uploading ? 'Uploading...' : 'Processing...'}
+                    >
+                        {isEditMode ? 'Update Student' : 'Admit Student'}
+                    </LoadingButton>
                 </CardFooter>
             </Card>
         </form>
