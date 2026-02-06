@@ -26,32 +26,44 @@ jobs:
             git reset --hard origin/v2-development
             
             # 2. Re-launch Containers
-            echo "Building production-grade containers via esbuild..."
+            echo "🚀 Rebuilding containers..."
             sudo docker compose down
-            # Using --force-recreate to ensure the new esbuild-packed containers are used
             sudo docker compose up -d --build --force-recreate
             
-            # 3. Verification Check (No Fake Green fix)
-            echo "Waiting for stabilization..."
-            sleep 20
+            # 3. Intelligent Health Verification
+            echo "⏱️ Waiting for services to stabilize (up to 2 minutes)..."
             
-            # Check for container health
-            UNHEALTHY=$(sudo docker compose ps --format json | grep -c "unhealthy" || true)
-            RUNNING=$(sudo docker compose ps --format json | grep -c "running" || true)
+            # Get expected service count from docker-compose.yml
+            EXPECTED_COUNT=$(grep -c "^  [a-zA-Z0-9_-]\+:" docker-compose.yml)
+            echo "📌 Expecting $EXPECTED_COUNT healthy services."
             
-            if [ "$UNHEALTHY" -gt "0" ]; then
-              echo "🔴 ERROR: Detected $UNHEALTHY unhealthy containers."
-              sudo docker compose ps
+            MAX_RETRIES=12
+            RETRY_COUNT=0
+            HEALTHY=false
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              echo "🔍 Checking health (Attempt $((RETRY_COUNT+1))/$MAX_RETRIES)..."
+              sleep 10
+              
+              RUNNING=$(sudo docker compose ps --format json | grep -c "running" || true)
+              UNHEALTHY=$(sudo docker compose ps --format json | grep -c "unhealthy" || true)
+              
+              if [ "$RUNNING" -eq "$EXPECTED_COUNT" ] && [ "$UNHEALTHY" -eq "0" ]; then
+                echo "🟢 Success! All $EXPECTED_COUNT services are healthy."
+                HEALTHY=true
+                break
+              fi
+              
+              echo "⚠️ Current State: $RUNNING/$EXPECTED_COUNT running, $UNHEALTHY unhealthy."
+              RETRY_COUNT=$((RETRY_COUNT+1))
+            done
+            
+            if [ "$HEALTHY" = false ]; then
+              echo "🔴 ERROR: System failed to reach 100% health in time."
+              echo "📜 DUMPING RECENT LOGS FOR DEBUGGING:"
+              sudo docker compose logs --tail=50
               exit 1
             fi
-            
-            if [ "$RUNNING" -lt "7" ]; then
-              echo "🔴 ERROR: Only $RUNNING/7 containers are running."
-              sudo docker compose ps
-              exit 1
-            fi
-            
-            echo "🟢 Deployment successful! All 7 services are running and healthy."
             
             # 4. Cleanup
             sudo docker image prune -f

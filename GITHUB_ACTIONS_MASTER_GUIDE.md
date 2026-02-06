@@ -4,6 +4,28 @@ This guide provides the **exact microsteps** to connect your GitHub repository t
 
 ---
 
+## 🛡️ Phase 0: AWS Resource Hardening (Swap Memory)
+
+Microservices and Next.js builds are "RAM Hungry". Small AWS instances (like t2.medium) can crash during deployment if they run out of memory. 
+
+**Run these commands on your server once to prevent crashes:**
+
+```bash
+# 1. Create a 4GB Swap file
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+
+# 2. Make it permanent
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# 3. Verify
+free -h
+```
+
+---
+
 ## 🏗️ Phase 1: Prepare your AWS EC2 Instance
 
 Before GitHub can talk to your server, your server needs to be ready.
