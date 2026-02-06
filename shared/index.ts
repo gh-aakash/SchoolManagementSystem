@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import Redis from 'ioredis';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -19,3 +20,6 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
+
+// Redis client - fallback to localhost if REDIS_URL not set
+export const redis = new Redis(process.env.REDIS_URL || 'redis://redis:6379');

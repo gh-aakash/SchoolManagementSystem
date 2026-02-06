@@ -9,7 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 app.use(cors());
-app.use(express.json());
+
+// NO express.json() here! It breaks proxying of POST/PUT bodies.
+// Middleware like express.json() consumes the request stream, 
+// preventing http-proxy-middleware from successfully forwarding it.
 
 // Routes mapping
 const routes: Record<string, string> = {

@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { supabase } from 'shared';
+// Removed redundant supabase import - using require('shared') below
 
 dotenv.config();
 
@@ -109,9 +109,36 @@ app.delete('/staff/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-// Get Active Academic Year
-app.get('/academic-years/active', async (req, res) => {
-    const { school_id } = req.query;
+const { supabase, redis } = require('shared');
+
+// In-memory cache for ultra-fast fallback
+const localCache = new Map<string, { data: any, expiry: number }>();
+
+// Helper for caching
+async function getCachedActiveYear(school_id: string) {
+    const cacheKey = `active_year:${school_id}`;
+
+    // 1. Try In-Memory Cache (5 minute TTL)
+    const local = localCache.get(cacheKey);
+    if (local && local.expiry > Date.now()) {
+        console.log(`[Identity] Memory Cache HIT (${school_id})`);
+        return { data: local.data, error: null };
+    }
+
+    try {
+        // 2. Try Redis Cache (1 hour TTL)
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+            console.log(`[Identity] Redis Cache HIT (${school_id})`);
+            const data = JSON.parse(cached);
+            localCache.set(cacheKey, { data, expiry: Date.now() + 300000 });
+            return { data, error: null };
+        }
+    } catch (e) {
+        console.warn('[Identity] Redis error:', e);
+    }
+
+    // 3. Fallback to Supabase
     const start = Date.now();
     const { data, error } = await supabase
         .from('academic_years')
@@ -120,7 +147,27 @@ app.get('/academic-years/active', async (req, res) => {
         .eq('is_active', true)
         .single();
 
-    console.log(`[Identity] Active Year fetch took ${Date.now() - start}ms`);
+    console.log(`[Identity] Supabase fetch took ${Date.now() - start}ms`);
+
+    if (data && !error) {
+        // Update caches
+        localCache.set(cacheKey, { data, expiry: Date.now() + 300000 });
+        try {
+            await redis.set(cacheKey, JSON.stringify(data), 'EX', 3600);
+        } catch (e) {
+            console.warn('[Identity] Redis set error:', e);
+        }
+    }
+
+    return { data, error };
+}
+
+// Get Active Academic Year
+app.get('/academic-years/active', async (req, res) => {
+    const { school_id } = req.query;
+    if (!school_id) return res.status(400).json({ error: 'school_id required' });
+
+    const { data, error } = await getCachedActiveYear(school_id as string);
 
     if (error) return res.status(400).json({ error: error.message });
     res.json(data);
